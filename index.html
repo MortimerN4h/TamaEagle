@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todoist Clone</title>    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/header.css">
+    <link rel="stylesheet" href="css/sidebar.css">
+    <link rel="stylesheet" href="css/content.css">
+    <link rel="stylesheet" href="css/modal.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- SortableJS for drag and drop -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <button class="menu-toggle" id="menuToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <button class="home-btn">
+                    <i class="fas fa-home"></i>
+                </button>
+                <div class="search-container">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" placeholder="Search" class="search-input">
+                </div>
+            </div>
+            <div class="header-right">
+                <button class="header-btn">
+                    <i class="fas fa-plus"></i>
+                </button>
+                <button class="header-btn">
+                    <i class="fas fa-question-circle"></i>
+                </button>
+                <button class="header-btn">
+                    <i class="fas fa-bell"></i>
+                </button>
+                <div class="user-profile">
+                    <div class="avatar">U</div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Container -->
+        <div class="main-container">
+            <!-- Sidebar -->
+            <aside class="sidebar" id="sidebar">
+                <nav class="sidebar-nav">
+                    <ul class="nav-list">                        <li class="nav-item active">
+                            <a href="#" class="nav-link" data-view="inbox">
+                                <i class="fas fa-inbox"></i>
+                                <span>Inbox</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-view="today">
+                                <i class="fas fa-calendar"></i>
+                                <span>Today</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-view="upcoming">
+                                <i class="fas fa-calendar-alt"></i>
+                                <span>Upcoming</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-view="completed">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Completed</span>
+                            </a>
+                        </li>
+                    </ul>
+
+                    <div class="projects-section">
+                        <div class="section-header">
+                            <h3>Projects</h3>
+                            <button class="add-project-btn">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                        <ul class="projects-list">                            <li class="project-item" data-id="personal">
+                                <div class="color-marker" style="background-color: #ff9900;"></div>
+                                <span>Personal</span>
+                            </li>
+                            <li class="project-item" data-id="work">
+                                <div class="color-marker" style="background-color: #5297ff;"></div>
+                                <span>Work</span>
+                            </li>
+                            <li class="project-item" data-id="shopping">
+                                <div class="color-marker" style="background-color: #fc5a5a;"></div>
+                                <span>Shopping</span>
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
+            </aside>
+
+            <!-- Content Area -->
+            <main class="content">
+                <div class="content-header">
+                    <div class="content-title">
+                        <h1>Inbox</h1>
+                    </div>
+                    <div class="content-actions">
+                        <button class="sort-btn">
+                            <i class="fas fa-sort"></i>
+                        </button>
+                        <button class="more-actions-btn">
+                            <i class="fas fa-ellipsis-h"></i>
+                        </button>
+                    </div>
+                </div>                <div class="tasks-container">
+                    <!-- Tasks List - Will be sortable -->
+                    <div class="tasks-list" id="tasksList">
+                        <!-- Task Items -->
+                        <div class="task-item" data-id="task1">
+                            <div class="task-drag-handle">
+                                <i class="fas fa-grip-lines"></i>
+                            </div>
+                            <div class="task-checkbox">
+                                <input type="checkbox" id="task1">
+                                <label for="task1"></label>
+                            </div>
+                            <div class="task-content">
+                                <div class="task-text">Complete the website design</div>
+                                <div class="task-details">
+                                    <span class="task-project">Work</span>
+                                    <span class="task-date">Today</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="task-item" data-id="task2">
+                            <div class="task-drag-handle">
+                                <i class="fas fa-grip-lines"></i>
+                            </div>
+                            <div class="task-checkbox">
+                                <input type="checkbox" id="task2">
+                                <label for="task2"></label>
+                            </div>
+                            <div class="task-content">
+                                <div class="task-text">Buy groceries</div>
+                                <div class="task-details">
+                                    <span class="task-project">Shopping</span>
+                                    <span class="task-date">Tomorrow</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="task-item" data-id="task3">
+                            <div class="task-drag-handle">
+                                <i class="fas fa-grip-lines"></i>
+                            </div>
+                            <div class="task-checkbox">
+                                <input type="checkbox" id="task3">
+                                <label for="task3"></label>
+                            </div>
+                            <div class="task-content">
+                                <div class="task-text">Call mom</div>
+                                <div class="task-details">
+                                    <span class="task-project">Personal</span>
+                                    <span class="task-date">Today</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Add Task Button -->
+                    <div class="add-task-container">
+                        <button class="add-task-btn">
+                            <i class="fas fa-plus"></i>
+                            <span>Add task</span>
+                        </button>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="js/models/Task.js"></script>
+    <script src="js/models/Project.js"></script>
+    <script src="js/models/DataStore.js"></script>
+    <script src="js/controllers/TaskController.js"></script>
+    <script src="js/controllers/ProjectController.js"></script>
+    <script src="js/views/UIController.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
