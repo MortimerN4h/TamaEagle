@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+    <html lang="en">
+
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>TamaEagle Register</title>
+        <link rel="stylesheet" href="../../css/Login/Register.css" />
+        <script type="module" src="../../js/Login/Register.js" defer></script>
+    </head>
+
+    <body>
+        <div class="register-container">
+            <form class="register-form">
+                <h2>Sign Up</h2>
+
+                <div class="input-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" required placeholder="Enter your email" />
+                </div>
+
+                <div class="input-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" required placeholder="Enter your password" />
+                    <span class="toggle-password" data-target="password">Show</span>
+                </div>
+
+                <div class="input-group">
+                    <label for="confirm-password">Confirm Password</label>
+                    <input type="password" id="confirm-password" required placeholder="Confirm your password" />
+                    <span class="toggle-password" data-target="confirm-password">Show</span>
+                </div>
+
+                <button type="button" class="register-btn" id="submit">Sign up</button>
+
+                <div class="divider">
+                    <span>or</span>
+                </div>
+
+                <button type="button" class="google-btn">
+                    <img src="../../assets/icons/google-logo.png" alt="Google" width="15" height="15"
+                        style="vertical-align: middle; margin-right: 2px;">
+                    Continue with Google
+                </button>
+
+                <p class="Login-text">
+                    Already have an account? <a href="Login.html">Sign in</a>
+                </p>
+            </form>
+        </div>
+    </body>
+
+</html>
