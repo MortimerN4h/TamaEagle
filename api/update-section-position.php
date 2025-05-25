@@ -1,5 +1,5 @@
 <?php
-require_once 'includes/config.php';
+require_once '../includes/config.php';
 requireLogin();
 
 // Check if it's an AJAX request
@@ -55,20 +55,20 @@ try {
     $shiftStmt = $conn->prepare($shiftQuery);
     $shiftStmt->bind_param("iii", $projectId, $sectionId, $position);
     $shiftStmt->execute();
-    
+
     // Set the position of our section
     $positionQuery = "UPDATE sections SET position = ? WHERE id = ?";
     $positionStmt = $conn->prepare($positionQuery);
     $positionStmt->bind_param("ii", $position, $sectionId);
     $positionStmt->execute();
-    
+
     // Commit transaction
     $conn->commit();
-    
+
     // Return success response
     header('Content-Type: application/json');
     echo json_encode([
-        'success' => true, 
+        'success' => true,
         'message' => 'Section position updated successfully',
         'data' => [
             'section_id' => $sectionId,
@@ -76,11 +76,10 @@ try {
             'position' => $position
         ]
     ]);
-    
 } catch (Exception $e) {
     // Rollback transaction on error
     $conn->rollback();
-    
+
     // Return error response
     header('Content-Type: application/json');
     echo json_encode(['success' => false, 'message' => 'Error updating section position: ' . $e->getMessage()]);

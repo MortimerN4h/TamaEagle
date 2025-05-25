@@ -1,5 +1,5 @@
 <?php
-require_once 'includes/config.php';
+require_once '../includes/config.php';
 requireLogin();
 
 $userId = getCurrentUserId();
@@ -9,7 +9,7 @@ $name = getGetData('name');
 // Validate required fields
 if (empty($projectId) || empty($name)) {
     $_SESSION['error'] = 'Project ID and section name are required.';
-    header("Location: index.php");
+    header("Location: ../index.php");
     exit;
 }
 
@@ -22,7 +22,7 @@ $projectResult = $projectStmt->get_result();
 
 if ($projectResult->num_rows === 0) {
     $_SESSION['error'] = 'Project not found or you do not have permission to add sections to it.';
-    header("Location: index.php");
+    header("Location: ../index.php");
     exit;
 }
 
@@ -47,6 +47,6 @@ if ($stmt->execute()) {
 }
 
 // Redirect back to project page
-header("Location: project.php?id=$projectId");
+header("Location: ../projects/project.php?id=$projectId");
 exit;
 ?>

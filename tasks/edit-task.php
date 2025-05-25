@@ -1,9 +1,9 @@
 <?php
-require_once 'includes/config.php';
+require_once '../includes/config.php';
 requireLogin();
 
 if ($_SERVER['REQUEST_METHOD'] != 'POST') {
-    header("Location: index.php");
+    header("Location: ../index.php");
     exit;
 }
 
@@ -26,7 +26,7 @@ $checkResult = $checkStmt->get_result();
 
 if ($checkResult->num_rows === 0) {
     $_SESSION['error'] = 'Task not found or you do not have permission to edit it.';
-    header("Location: index.php");
+    header("Location: ../index.php");
     exit;
 }
 
@@ -51,7 +51,7 @@ if (!empty($projectId)) {
     $stmt->bind_param("ii", $projectId, $userId);
     $stmt->execute();
     $result = $stmt->get_result();
-    
+
     if ($result->num_rows === 0) {
         $_SESSION['error'] = 'Invalid project selected.';
         header("Location: " . $_SERVER['HTTP_REFERER']);
@@ -66,7 +66,7 @@ if (!empty($sectionId) && !empty($projectId)) {
     $stmt->bind_param("ii", $sectionId, $projectId);
     $stmt->execute();
     $result = $stmt->get_result();
-    
+
     if ($result->num_rows === 0) {
         $sectionId = null; // Clear invalid section
     }
@@ -85,16 +85,16 @@ $stmt->bind_param("ssssiiii", $name, $description, $startDate, $dueDate, $priori
 
 if ($stmt->execute()) {
     $_SESSION['success'] = 'Task updated successfully.';
-    
+
     // Redirect back to previous page or inbox if not available
-    $redirect = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : 'inbox.php';
+    $redirect = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '../views/inbox.php';
     header("Location: $redirect");
     exit;
 } else {
     $_SESSION['error'] = 'Error updating task: ' . $conn->error;
-    
+
     // Redirect back to previous page or inbox if not available
-    $redirect = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : 'inbox.php';
+    $redirect = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '../views/inbox.php';
     header("Location: $redirect");
     exit;
 }

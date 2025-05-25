@@ -1,5 +1,5 @@
 <?php
-require_once 'includes/config.php';
+require_once '../includes/config.php';
 requireLogin();
 
 $userId = getCurrentUserId();
@@ -8,7 +8,7 @@ $taskId = getGetData('id');
 // Validate task exists and belongs to user
 if (empty($taskId)) {
     $_SESSION['error'] = 'No task specified.';
-    header("Location: completed.php");
+    header("Location: ../views/completed.php");
     exit;
 }
 
@@ -20,7 +20,7 @@ $checkResult = $checkStmt->get_result();
 
 if ($checkResult->num_rows === 0) {
     $_SESSION['error'] = 'Task not found or you do not have permission to uncomplete it.';
-    header("Location: completed.php");
+    header("Location: ../views/completed.php");
     exit;
 }
 
@@ -36,6 +36,6 @@ if ($stmt->execute()) {
 }
 
 // Redirect back to completed page
-header("Location: completed.php");
+header("Location: ../views/completed.php");
 exit;
 ?>

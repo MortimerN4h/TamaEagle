@@ -1,5 +1,5 @@
 <?php
-require_once 'includes/config.php';
+require_once '../includes/config.php';
 requireLogin();
 
 $userId = getCurrentUserId();
@@ -16,6 +16,6 @@ if ($stmt->execute()) {
 }
 
 // Redirect back to completed page
-header("Location: completed.php");
+header("Location: ../views/completed.php");
 exit;
 ?>

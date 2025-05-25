@@ -1,5 +1,5 @@
 <?php
-require_once 'includes/config.php';
+require_once '../includes/config.php';
 requireLogin();
 
 $userId = getCurrentUserId();
@@ -43,7 +43,7 @@ $todayCount = $todayResult->num_rows;
 $pageTitle = 'Today';
 
 // Include header
-include 'includes/header.php';
+include '../includes/header.php';
 ?>
 
 <div class="container-fluid py-4">
@@ -81,13 +81,13 @@ include 'includes/header.php';
                                 <?php echo formatDate($task['due_date']); ?>
                             </span>
                         </div>
-                        
+
                         <?php if (!empty($task['description'])): ?>
                             <div class="task-description">
                                 <?php echo nl2br(htmlspecialchars($task['description'])); ?>
                             </div>
                         <?php endif; ?>
-                        
+
                         <div class="task-footer">
                             <?php if (!empty($task['project_name'])): ?>
                                 <span class="task-project" style="background-color: <?php echo $task['project_color']; ?>20;">
@@ -95,15 +95,15 @@ include 'includes/header.php';
                                     <?php echo htmlspecialchars($task['project_name']); ?>
                                 </span>
                             <?php endif; ?>
-                            
+
                             <div class="task-actions">
-                                <button class="edit-task" data-id="<?php echo $task['id']; ?>" 
-                                        data-name="<?php echo htmlspecialchars($task['name']); ?>" 
-                                        data-description="<?php echo htmlspecialchars($task['description']); ?>"
-                                        data-start-date="<?php echo $task['start_date']; ?>"
-                                        data-due-date="<?php echo $task['due_date']; ?>"
-                                        data-priority="<?php echo $task['priority']; ?>"
-                                        data-project-id="<?php echo $task['project_id']; ?>">
+                                <button class="edit-task" data-id="<?php echo $task['id']; ?>"
+                                    data-name="<?php echo htmlspecialchars($task['name']); ?>"
+                                    data-description="<?php echo htmlspecialchars($task['description']); ?>"
+                                    data-start-date="<?php echo $task['start_date']; ?>"
+                                    data-due-date="<?php echo $task['due_date']; ?>"
+                                    data-priority="<?php echo $task['priority']; ?>"
+                                    data-project-id="<?php echo $task['project_id']; ?>">
                                     <i class="fas fa-edit"></i>
                                 </button>
                                 <a href="delete-task.php?id=<?php echo $task['id']; ?>" class="delete-task" onclick="return confirm('Are you sure you want to delete this task?');">
@@ -148,13 +148,13 @@ include 'includes/header.php';
                                 </span>
                             <?php endif; ?>
                         </div>
-                        
+
                         <?php if (!empty($task['description'])): ?>
                             <div class="task-description">
                                 <?php echo nl2br(htmlspecialchars($task['description'])); ?>
                             </div>
                         <?php endif; ?>
-                        
+
                         <div class="task-footer">
                             <?php if (!empty($task['project_name'])): ?>
                                 <span class="task-project" style="background-color: <?php echo $task['project_color']; ?>20;">
@@ -162,15 +162,15 @@ include 'includes/header.php';
                                     <?php echo htmlspecialchars($task['project_name']); ?>
                                 </span>
                             <?php endif; ?>
-                            
+
                             <div class="task-actions">
-                                <button class="edit-task" data-id="<?php echo $task['id']; ?>" 
-                                        data-name="<?php echo htmlspecialchars($task['name']); ?>" 
-                                        data-description="<?php echo htmlspecialchars($task['description']); ?>"
-                                        data-start-date="<?php echo $task['start_date']; ?>"
-                                        data-due-date="<?php echo $task['due_date']; ?>"
-                                        data-priority="<?php echo $task['priority']; ?>"
-                                        data-project-id="<?php echo $task['project_id']; ?>">
+                                <button class="edit-task" data-id="<?php echo $task['id']; ?>"
+                                    data-name="<?php echo htmlspecialchars($task['name']); ?>"
+                                    data-description="<?php echo htmlspecialchars($task['description']); ?>"
+                                    data-start-date="<?php echo $task['start_date']; ?>"
+                                    data-due-date="<?php echo $task['due_date']; ?>"
+                                    data-priority="<?php echo $task['priority']; ?>"
+                                    data-project-id="<?php echo $task['project_id']; ?>">
                                     <i class="fas fa-edit"></i>
                                 </button>
                                 <a href="delete-task.php?id=<?php echo $task['id']; ?>" class="delete-task" onclick="return confirm('Are you sure you want to delete this task?');">
@@ -192,4 +192,4 @@ include 'includes/header.php';
     </div>
 </div>
 
-<?php include 'includes/footer.php'; ?>
+<?php include '../includes/footer.php'; ?>

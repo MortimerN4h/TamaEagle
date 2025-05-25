@@ -1,5 +1,5 @@
 <?php
-require_once 'includes/config.php';
+require_once '../includes/config.php';
 requireLogin();
 
 $userId = getCurrentUserId();
@@ -38,7 +38,7 @@ $totalPages = ceil($totalTasks / $limit);
 $tasksByDate = [];
 while ($task = $tasksResult->fetch_assoc()) {
     $completedDate = date('Y-m-d', strtotime($task['completed_at']));
-    
+
     if (!isset($tasksByDate[$completedDate])) {
         $tasksByDate[$completedDate] = [
             'date' => $completedDate,
@@ -46,7 +46,7 @@ while ($task = $tasksResult->fetch_assoc()) {
             'tasks' => []
         ];
     }
-    
+
     $tasksByDate[$completedDate]['tasks'][] = $task;
 }
 
@@ -54,7 +54,7 @@ while ($task = $tasksResult->fetch_assoc()) {
 $pageTitle = 'Completed';
 
 // Include header
-include 'includes/header.php';
+include '../includes/header.php';
 ?>
 
 <div class="container-fluid py-4">
@@ -97,13 +97,13 @@ include 'includes/header.php';
                                     <?php echo date('H:i', strtotime($task['completed_at'])); ?>
                                 </span>
                             </div>
-                            
+
                             <?php if (!empty($task['description'])): ?>
                                 <div class="task-description">
                                     <?php echo nl2br(htmlspecialchars($task['description'])); ?>
                                 </div>
                             <?php endif; ?>
-                            
+
                             <div class="task-footer">
                                 <?php if (!empty($task['project_name'])): ?>
                                     <span class="task-project" style="background-color: <?php echo $task['project_color']; ?>20;">
@@ -111,7 +111,7 @@ include 'includes/header.php';
                                         <?php echo htmlspecialchars($task['project_name']); ?>
                                     </span>
                                 <?php endif; ?>
-                                
+
                                 <div class="task-actions">
                                     <a href="delete-task.php?id=<?php echo $task['id']; ?>" class="delete-task" onclick="return confirm('Are you sure you want to delete this task?');">
                                         <i class="fas fa-trash"></i>
@@ -148,4 +148,4 @@ include 'includes/header.php';
     <?php endif; ?>
 </div>
 
-<?php include 'includes/footer.php'; ?>
+<?php include '../includes/footer.php'; ?>

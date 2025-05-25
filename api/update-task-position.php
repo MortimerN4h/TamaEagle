@@ -1,5 +1,5 @@
 <?php
-require_once 'includes/config.php';
+require_once '../includes/config.php';
 requireLogin();
 
 // Check if it's an AJAX request
@@ -39,23 +39,23 @@ if ($sectionId !== null) {
     $sectionStmt->bind_param("i", $sectionId);
     $sectionStmt->execute();
     $sectionResult = $sectionStmt->get_result();
-    
+
     if ($sectionResult->num_rows === 0) {
         // Return JSON error if section not found
         header('Content-Type: application/json');
         echo json_encode(['success' => false, 'message' => 'Section not found']);
         exit;
     }
-    
+
     $section = $sectionResult->fetch_assoc();
-    
+
     // If task has a project ID, ensure section belongs to same project
     if ($projectId !== null && $section['project_id'] != $projectId) {
         header('Content-Type: application/json');
         echo json_encode(['success' => false, 'message' => 'Section does not belong to task\'s project']);
         exit;
     }
-    
+
     // Update task's project ID if moving to a section
     $projectId = $section['project_id'];
 }
@@ -69,7 +69,7 @@ try {
     $updateTaskStmt = $conn->prepare($updateTaskQuery);
     $updateTaskStmt->bind_param("iiii", $sectionId, $projectId, $taskId, $userId);
     $updateTaskStmt->execute();
-    
+
     // Update positions of other tasks in the same section/project
     if ($sectionId !== null) {
         // Move all tasks down to make room at the specified position
@@ -82,7 +82,7 @@ try {
         $shiftStmt = $conn->prepare($shiftQuery);
         $shiftStmt->bind_param("iii", $sectionId, $taskId, $position);
         $shiftStmt->execute();
-        
+
         // Set the position of our task
         $positionQuery = "UPDATE tasks SET position = ? WHERE id = ?";
         $positionStmt = $conn->prepare($positionQuery);
@@ -100,7 +100,7 @@ try {
         $shiftStmt = $conn->prepare($shiftQuery);
         $shiftStmt->bind_param("iii", $projectId, $taskId, $position);
         $shiftStmt->execute();
-        
+
         // Set the position of our task
         $positionQuery = "UPDATE tasks SET position = ? WHERE id = ?";
         $positionStmt = $conn->prepare($positionQuery);
@@ -118,21 +118,21 @@ try {
         $shiftStmt = $conn->prepare($shiftQuery);
         $shiftStmt->bind_param("iii", $taskId, $userId, $position);
         $shiftStmt->execute();
-        
+
         // Set the position of our task
         $positionQuery = "UPDATE tasks SET position = ? WHERE id = ?";
         $positionStmt = $conn->prepare($positionQuery);
         $positionStmt->bind_param("ii", $position, $taskId);
         $positionStmt->execute();
     }
-    
+
     // Commit transaction
     $conn->commit();
-    
+
     // Return success response
     header('Content-Type: application/json');
     echo json_encode([
-        'success' => true, 
+        'success' => true,
         'message' => 'Task position updated successfully',
         'data' => [
             'task_id' => $taskId,
@@ -141,11 +141,10 @@ try {
             'position' => $position
         ]
     ]);
-    
 } catch (Exception $e) {
     // Rollback transaction on error
     $conn->rollback();
-    
+
     // Return error response
     header('Content-Type: application/json');
     echo json_encode(['success' => false, 'message' => 'Error updating task position: ' . $e->getMessage()]);

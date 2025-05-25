@@ -1,5 +1,5 @@
 <?php
-require_once 'includes/config.php';
+require_once '../includes/config.php';
 requireLogin();
 
 $userId = getCurrentUserId();
@@ -57,7 +57,7 @@ for ($i = 0; $i < 7; $i++) {
 // Group tasks by due date
 while ($task = $tasksResult->fetch_assoc()) {
     $taskDate = $task['due_date'] ?: $task['start_date'];
-    
+
     // Only add tasks to dates within our range
     if (isset($tasksByDate[$taskDate])) {
         $tasksByDate[$taskDate]['tasks'][] = $task;
@@ -68,7 +68,7 @@ while ($task = $tasksResult->fetch_assoc()) {
 $pageTitle = 'Upcoming';
 
 // Include header
-include 'includes/header.php';
+include '../includes/header.php';
 ?>
 
 <div class="container-fluid py-4">
@@ -122,13 +122,13 @@ include 'includes/header.php';
                                 </div>
                                 <h5 class="task-name"><?php echo htmlspecialchars($task['name']); ?></h5>
                             </div>
-                            
+
                             <?php if (!empty($task['description'])): ?>
                                 <div class="task-description">
                                     <?php echo nl2br(htmlspecialchars($task['description'])); ?>
                                 </div>
                             <?php endif; ?>
-                            
+
                             <div class="task-footer">
                                 <?php if (!empty($task['project_name'])): ?>
                                     <span class="task-project" style="background-color: <?php echo $task['project_color']; ?>20;">
@@ -136,15 +136,15 @@ include 'includes/header.php';
                                         <?php echo htmlspecialchars($task['project_name']); ?>
                                     </span>
                                 <?php endif; ?>
-                                
+
                                 <div class="task-actions">
-                                    <button class="edit-task" data-id="<?php echo $task['id']; ?>" 
-                                            data-name="<?php echo htmlspecialchars($task['name']); ?>" 
-                                            data-description="<?php echo htmlspecialchars($task['description']); ?>"
-                                            data-start-date="<?php echo $task['start_date']; ?>"
-                                            data-due-date="<?php echo $task['due_date']; ?>"
-                                            data-priority="<?php echo $task['priority']; ?>"
-                                            data-project-id="<?php echo $task['project_id']; ?>">
+                                    <button class="edit-task" data-id="<?php echo $task['id']; ?>"
+                                        data-name="<?php echo htmlspecialchars($task['name']); ?>"
+                                        data-description="<?php echo htmlspecialchars($task['description']); ?>"
+                                        data-start-date="<?php echo $task['start_date']; ?>"
+                                        data-due-date="<?php echo $task['due_date']; ?>"
+                                        data-priority="<?php echo $task['priority']; ?>"
+                                        data-project-id="<?php echo $task['project_id']; ?>">
                                         <i class="fas fa-edit"></i>
                                     </button>
                                     <a href="delete-task.php?id=<?php echo $task['id']; ?>" class="delete-task" onclick="return confirm('Are you sure you want to delete this task?');">
@@ -175,15 +175,15 @@ include 'includes/header.php';
 </div>
 
 <script>
-function addTaskForDay(date) {
-    // Set the date in the task modal and open it
-    document.getElementById('startDate').value = date;
-    document.getElementById('dueDate').value = date;
-    
-    // Open the modal
-    const taskModal = new bootstrap.Modal(document.getElementById('taskModal'));
-    taskModal.show();
-}
+    function addTaskForDay(date) {
+        // Set the date in the task modal and open it
+        document.getElementById('startDate').value = date;
+        document.getElementById('dueDate').value = date;
+
+        // Open the modal
+        const taskModal = new bootstrap.Modal(document.getElementById('taskModal'));
+        taskModal.show();
+    }
 </script>
 
-<?php include 'includes/footer.php'; ?>
+<?php include '../includes/footer.php'; ?>

@@ -1,5 +1,5 @@
 <?php
-require_once 'includes/config.php';
+require_once '../includes/config.php';
 requireLogin();
 
 $userId = getCurrentUserId();
@@ -8,7 +8,7 @@ $sectionId = getGetData('id');
 // Validate required fields
 if (empty($sectionId)) {
     $_SESSION['error'] = 'Section ID is required.';
-    header("Location: index.php");
+    header("Location: ../index.php");
     exit;
 }
 
@@ -63,13 +63,13 @@ try {
     $moveTasksStmt = $conn->prepare($moveTasksQuery);
     $moveTasksStmt->bind_param("iii", $otherSectionId, $sectionId, $projectId);
     $moveTasksStmt->execute();
-    
+
     // Delete the section
     $deleteSectionQuery = "DELETE FROM sections WHERE id = ?";
     $deleteSectionStmt = $conn->prepare($deleteSectionQuery);
     $deleteSectionStmt->bind_param("i", $sectionId);
     $deleteSectionStmt->execute();
-    
+
     // Commit transaction
     $conn->commit();
     $_SESSION['success'] = 'Section deleted successfully. Tasks have been moved to another section.';
@@ -80,6 +80,6 @@ try {
 }
 
 // Redirect back to project page
-header("Location: project.php?id=$projectId");
+header("Location: ../projects/project.php?id=$projectId");
 exit;
 ?>

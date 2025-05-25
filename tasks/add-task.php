@@ -1,5 +1,5 @@
 <?php
-require_once 'includes/config.php';
+require_once '../includes/config.php';
 requireLogin();
 
 if ($_SERVER['REQUEST_METHOD'] != 'POST') {
@@ -37,7 +37,7 @@ if (!empty($projectId)) {
     $stmt->bind_param("ii", $projectId, $userId);
     $stmt->execute();
     $result = $stmt->get_result();
-    
+
     if ($result->num_rows === 0) {
         $_SESSION['error'] = 'Invalid project selected.';
         header("Location: " . $_SERVER['HTTP_REFERER']);
@@ -52,7 +52,7 @@ if (!empty($sectionId)) {
     $stmt->bind_param("ii", $sectionId, $projectId);
     $stmt->execute();
     $result = $stmt->get_result();
-    
+
     if ($result->num_rows === 0) {
         $_SESSION['error'] = 'Invalid section selected.';
         header("Location: " . $_SERVER['HTTP_REFERER']);
@@ -70,7 +70,7 @@ if (!empty($projectId) && !empty($sectionId)) {
     $positionQuery = "SELECT COALESCE(MAX(position), 0) + 1 as next_position FROM tasks WHERE project_id = ? AND section_id = ?";
     $positionParams = [$projectId, $sectionId];
     $positionTypes = "ii";
-} 
+}
 // If only project ID is provided, get position within that project
 elseif (!empty($projectId)) {
     $positionQuery = "SELECT COALESCE(MAX(position), 0) + 1 as next_position FROM tasks WHERE project_id = ?";
@@ -93,16 +93,16 @@ $stmt->bind_param("iiisssiii", $userId, $projectId, $sectionId, $name, $descript
 
 if ($stmt->execute()) {
     $_SESSION['success'] = 'Task added successfully.';
-    
+
     // Redirect back to previous page or inbox if not available
-    $redirect = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : 'inbox.php';
+    $redirect = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '../views/inbox.php';
     header("Location: $redirect");
     exit;
 } else {
     $_SESSION['error'] = 'Error adding task: ' . $conn->error;
-    
+
     // Redirect back to previous page or inbox if not available
-    $redirect = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : 'inbox.php';
+    $redirect = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '../views/inbox.php';
     header("Location: $redirect");
     exit;
 }

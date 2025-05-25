@@ -1,5 +1,5 @@
 <?php
-require_once 'includes/config.php';
+require_once '../includes/config.php';
 requireLogin();
 
 $userId = getCurrentUserId();
@@ -8,7 +8,7 @@ $taskId = getGetData('id');
 // Validate task exists and belongs to user
 if (empty($taskId)) {
     $_SESSION['error'] = 'No task specified.';
-    header("Location: index.php");
+    header("Location: ../index.php");
     exit;
 }
 
@@ -20,7 +20,7 @@ $checkResult = $checkStmt->get_result();
 
 if ($checkResult->num_rows === 0) {
     $_SESSION['error'] = 'Task not found or you do not have permission to complete it.';
-    header("Location: index.php");
+    header("Location: ../index.php");
     exit;
 }
 
@@ -36,7 +36,7 @@ if ($stmt->execute()) {
 }
 
 // Redirect back to previous page or inbox if not available
-$redirect = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : 'inbox.php';
+$redirect = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '../views/inbox.php';
 header("Location: $redirect");
 exit;
 ?>

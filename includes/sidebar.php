@@ -38,7 +38,7 @@ $currentPage = basename($_SERVER['PHP_SELF'], '.php');
         <!-- Main navigation items -->
         <ul class="sidebar-nav">
             <li class="sidebar-item <?php echo ($currentPage == 'inbox') ? 'active' : ''; ?>">
-                <a href="inbox.php" class="sidebar-link">
+                <a href="../views/inbox.php" class="sidebar-link">
                     <i class="fa fa-inbox"></i>
                     <span>Inbox</span>
                     <?php if ($inboxCount > 0): ?>
@@ -47,7 +47,7 @@ $currentPage = basename($_SERVER['PHP_SELF'], '.php');
                 </a>
             </li>
             <li class="sidebar-item <?php echo ($currentPage == 'today') ? 'active' : ''; ?>">
-                <a href="today.php" class="sidebar-link">
+                <a href="../views/today.php" class="sidebar-link">
                     <i class="fa fa-calendar-day"></i>
                     <span>Today</span>
                     <?php if ($todayCount > 0): ?>
@@ -56,7 +56,7 @@ $currentPage = basename($_SERVER['PHP_SELF'], '.php');
                 </a>
             </li>
             <li class="sidebar-item <?php echo ($currentPage == 'upcoming') ? 'active' : ''; ?>">
-                <a href="upcoming.php" class="sidebar-link">
+                <a href="../views/upcoming.php" class="sidebar-link">
                     <i class="fa fa-calendar"></i>
                     <span>Upcoming</span>
                     <?php if ($upcomingCount > 0): ?>
@@ -65,7 +65,7 @@ $currentPage = basename($_SERVER['PHP_SELF'], '.php');
                 </a>
             </li>
             <li class="sidebar-item <?php echo ($currentPage == 'completed') ? 'active' : ''; ?>">
-                <a href="completed.php" class="sidebar-link">
+                <a href="../views/completed.php" class="sidebar-link">
                     <i class="fa fa-check-circle"></i>
                     <span>Completed</span>
                 </a>
@@ -91,9 +91,8 @@ $currentPage = basename($_SERVER['PHP_SELF'], '.php');
                 $taskCountResult = $projectTaskStmt->get_result();
                 $taskCountRow = $taskCountResult->fetch_assoc();
                 $taskCount = $taskCountRow['task_count'];
-                ?>
-                <li class="sidebar-item <?php echo ($currentPage == 'project' && isset($_GET['id']) && $_GET['id'] == $project['id']) ? 'active' : ''; ?>">
-                    <a href="project.php?id=<?php echo $project['id']; ?>" class="sidebar-link">
+                ?> <li class="sidebar-item <?php echo ($currentPage == 'project' && isset($_GET['id']) && $_GET['id'] == $project['id']) ? 'active' : ''; ?>">
+                    <a href="../projects/project.php?id=<?php echo $project['id']; ?>" class="sidebar-link">
                         <i class="fa fa-project-diagram" style="color: <?php echo $project['color']; ?>"></i>
                         <span><?php echo htmlspecialchars($project['name']); ?></span>
                         <?php if ($taskCount > 0): ?>
@@ -114,7 +113,7 @@ $currentPage = basename($_SERVER['PHP_SELF'], '.php');
                 <h5 class="modal-title" id="projectModalLabel">Add New Project</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="add-project.php" method="post">
+            <form action="../projects/add-project.php" method="post">
                 <div class="modal-body">
                     <div class="mb-3">
                         <label for="projectName" class="form-label">Project Name</label>

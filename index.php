@@ -2,6 +2,6 @@
 require_once 'includes/config.php';
 
 // Redirect to Inbox page
-header("Location: inbox.php");
+header("Location: views/inbox.php");
 exit;
 ?>

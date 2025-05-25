@@ -111,7 +111,8 @@ a {
     color: var(--medium-gray);
 }
 
-.sidebar-link:hover, .sidebar-item.active .sidebar-link {
+.sidebar-link:hover,
+.sidebar-item.active .sidebar-link {
     background-color: var(--light-gray);
     color: var(--primary-color);
 }
@@ -211,19 +212,23 @@ a {
 
 /* Priority indicators */
 .priority-0 {
-    border-left: 3px solid #808080; /* Low - Gray */
+    border-left: 3px solid #808080;
+    /* Low - Gray */
 }
 
 .priority-1 {
-    border-left: 3px solid #4285f4; /* Medium - Blue */
+    border-left: 3px solid #4285f4;
+    /* Medium - Blue */
 }
 
 .priority-2 {
-    border-left: 3px solid #fbbc04; /* High - Yellow */
+    border-left: 3px solid #fbbc04;
+    /* High - Yellow */
 }
 
 .priority-3 {
-    border-left: 3px solid #ea4335; /* Urgent - Red */
+    border-left: 3px solid #ea4335;
+    /* Urgent - Red */
 }
 
 /* Section Styles */
@@ -321,15 +326,15 @@ a {
     .sidebar {
         left: -250px;
     }
-    
+
     .sidebar.show {
         left: 0;
     }
-    
+
     .main-content {
         margin-left: 0;
     }
-    
+
     .content-container.sidebar-open .main-content {
         margin-left: var(--sidebar-width);
     }
@@ -379,7 +384,9 @@ a {
     border-color: var(--primary-color);
 }
 
-.btn-primary:hover, .btn-primary:focus, .btn-primary:active {
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active {
     background-color: var(--hover-color) !important;
     border-color: var(--hover-color) !important;
 }

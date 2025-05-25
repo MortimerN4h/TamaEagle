@@ -1,5 +1,5 @@
 <?php
-require_once 'includes/config.php';
+require_once '../includes/config.php';
 requireLogin();
 
 $userId = getCurrentUserId();
@@ -14,7 +14,7 @@ $projectResult = $projectStmt->get_result();
 
 if ($projectResult->num_rows === 0) {
     // Project not found or doesn't belong to user
-    header("Location: index.php");
+    header("Location: ../index.php");
     exit;
 }
 
@@ -39,7 +39,7 @@ if (count($sections) === 0) {
     $defaultSectionStmt = $conn->prepare($defaultSectionQuery);
     $defaultSectionStmt->bind_param("is", $projectId, $defaultSectionName);
     $defaultSectionStmt->execute();
-    
+
     $defaultSectionId = $defaultSectionStmt->insert_id;
     $sections[] = [
         'id' => $defaultSectionId,
@@ -99,7 +99,7 @@ $completionPercentage = $totalTasks > 0 ? round(($completedTasks / $totalTasks) 
 $pageTitle = htmlspecialchars($project['name']);
 
 // Include header
-include 'includes/header.php';
+include '../includes/header.php';
 ?>
 
 <div class="container-fluid py-4">
@@ -143,12 +143,12 @@ include 'includes/header.php';
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end">
                                 <li><a class="dropdown-item edit-section" href="#" data-id="<?php echo $section['id']; ?>" data-name="<?php echo htmlspecialchars($section['name']); ?>">
-                                    <i class="fas fa-edit"></i> Rename
-                                </a></li>
+                                        <i class="fas fa-edit"></i> Rename
+                                    </a></li>
                                 <?php if (count($sections) > 1): ?>
                                     <li><a class="dropdown-item delete-section" href="delete-section.php?id=<?php echo $section['id']; ?>" onclick="return confirm('Are you sure you want to delete this section? All tasks will be moved to the first section.');">
-                                        <i class="fas fa-trash"></i> Delete
-                                    </a></li>
+                                            <i class="fas fa-trash"></i> Delete
+                                        </a></li>
                                 <?php endif; ?>
                             </ul>
                         </div>
@@ -175,23 +175,23 @@ include 'includes/header.php';
                                             </span>
                                         <?php endif; ?>
                                     </div>
-                                    
+
                                     <?php if (!empty($task['description'])): ?>
                                         <div class="task-description">
                                             <?php echo nl2br(htmlspecialchars($task['description'])); ?>
                                         </div>
                                     <?php endif; ?>
-                                    
+
                                     <div class="task-footer">
                                         <div class="task-actions">
-                                            <button class="edit-task" data-id="<?php echo $task['id']; ?>" 
-                                                    data-name="<?php echo htmlspecialchars($task['name']); ?>" 
-                                                    data-description="<?php echo htmlspecialchars($task['description']); ?>"
-                                                    data-start-date="<?php echo $task['start_date']; ?>"
-                                                    data-due-date="<?php echo $task['due_date']; ?>"
-                                                    data-priority="<?php echo $task['priority']; ?>"
-                                                    data-project-id="<?php echo $task['project_id']; ?>"
-                                                    data-section-id="<?php echo $task['section_id']; ?>">
+                                            <button class="edit-task" data-id="<?php echo $task['id']; ?>"
+                                                data-name="<?php echo htmlspecialchars($task['name']); ?>"
+                                                data-description="<?php echo htmlspecialchars($task['description']); ?>"
+                                                data-start-date="<?php echo $task['start_date']; ?>"
+                                                data-due-date="<?php echo $task['due_date']; ?>"
+                                                data-priority="<?php echo $task['priority']; ?>"
+                                                data-project-id="<?php echo $task['project_id']; ?>"
+                                                data-section-id="<?php echo $task['section_id']; ?>">
                                                 <i class="fas fa-edit"></i>
                                             </button>
                                             <a href="delete-task.php?id=<?php echo $task['id']; ?>" class="delete-task" onclick="return confirm('Are you sure you want to delete this task?');">
@@ -219,35 +219,35 @@ include 'includes/header.php';
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Edit section name
-    const editSectionLinks = document.querySelectorAll('.edit-section');
-    editSectionLinks.forEach(link => {
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
-            const sectionId = this.dataset.id;
-            const currentName = this.dataset.name;
-            
-            const newName = prompt('Enter new section name:', currentName);
-            if (newName && newName.trim() !== '' && newName !== currentName) {
-                window.location.href = `rename-section.php?id=${sectionId}&name=${encodeURIComponent(newName)}`;
-            }
+    document.addEventListener('DOMContentLoaded', function() {
+        // Edit section name
+        const editSectionLinks = document.querySelectorAll('.edit-section');
+        editSectionLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const sectionId = this.dataset.id;
+                const currentName = this.dataset.name;
+
+                const newName = prompt('Enter new section name:', currentName);
+                if (newName && newName.trim() !== '' && newName !== currentName) {
+                    window.location.href = `rename-section.php?id=${sectionId}&name=${encodeURIComponent(newName)}`;
+                }
+            });
+        });
+
+        // Add task to specific section
+        const addTaskButtons = document.querySelectorAll('.add-task-to-section');
+        addTaskButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const sectionId = this.dataset.sectionId;
+                document.getElementById('sectionId').value = sectionId;
+                document.getElementById('project').value = <?php echo $projectId; ?>;
+
+                const taskModal = new bootstrap.Modal(document.getElementById('taskModal'));
+                taskModal.show();
+            });
         });
     });
-    
-    // Add task to specific section
-    const addTaskButtons = document.querySelectorAll('.add-task-to-section');
-    addTaskButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const sectionId = this.dataset.sectionId;
-            document.getElementById('sectionId').value = sectionId;
-            document.getElementById('project').value = <?php echo $projectId; ?>;
-            
-            const taskModal = new bootstrap.Modal(document.getElementById('taskModal'));
-            taskModal.show();
-        });
-    });
-});
 </script>
 
-<?php include 'includes/footer.php'; ?>
+<?php include '../includes/footer.php'; ?>

@@ -27,21 +27,21 @@ $nextSunday = date('Y-m-d', strtotime('next Sunday'));
                 <h5 class="modal-title" id="taskModalLabel">Add New Task</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="taskForm" action="add-task.php" method="post">
+            <form id="taskForm" action="../tasks/add-task.php" method="post">
                 <div class="modal-body">
                     <input type="hidden" id="taskId" name="task_id">
                     <input type="hidden" id="sectionId" name="section_id">
-                    
+
                     <div class="mb-3">
                         <label for="taskName" class="form-label">Task Name</label>
                         <input type="text" class="form-control" id="taskName" name="name" required>
                     </div>
-                    
+
                     <div class="mb-3">
                         <label for="taskDescription" class="form-label">Description</label>
                         <textarea class="form-control" id="taskDescription" name="description" rows="3"></textarea>
                     </div>
-                    
+
                     <div class="row mb-3">
                         <div class="col">
                             <label for="startDate" class="form-label">Start Date</label>
@@ -52,7 +52,7 @@ $nextSunday = date('Y-m-d', strtotime('next Sunday'));
                             <input type="date" class="form-control" id="dueDate" name="due_date" value="<?php echo $currentDate; ?>">
                         </div>
                     </div>
-                    
+
                     <div class="mb-3">
                         <div class="btn-group date-shortcut-group" role="group">
                             <button type="button" class="btn btn-sm btn-outline-secondary date-shortcut" data-start="<?php echo $currentDate; ?>" data-due="<?php echo $currentDate; ?>">Today</button>
@@ -60,7 +60,7 @@ $nextSunday = date('Y-m-d', strtotime('next Sunday'));
                             <button type="button" class="btn btn-sm btn-outline-secondary date-shortcut" data-start="<?php echo $currentDate; ?>" data-due="<?php echo ($nextSaturday > $nextSunday) ? $nextSunday : $nextSaturday; ?>">This Weekend</button>
                         </div>
                     </div>
-                    
+
                     <div class="mb-3">
                         <label for="priority" class="form-label">Priority</label>
                         <select class="form-select" id="priority" name="priority">
@@ -70,7 +70,7 @@ $nextSunday = date('Y-m-d', strtotime('next Sunday'));
                             <option value="3">Urgent</option>
                         </select>
                     </div>
-                    
+
                     <div class="mb-3">
                         <label for="project" class="form-label">Project</label>
                         <select class="form-select" id="project" name="project_id">
@@ -91,39 +91,39 @@ $nextSunday = date('Y-m-d', strtotime('next Sunday'));
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Date validation
-    document.getElementById('dueDate').addEventListener('change', function() {
-        const startDate = document.getElementById('startDate').value;
-        if (this.value < startDate) {
-            alert('Due date cannot be before start date');
-            this.value = startDate;
-        }
-    });
+    document.addEventListener('DOMContentLoaded', function() {
+        // Date validation
+        document.getElementById('dueDate').addEventListener('change', function() {
+            const startDate = document.getElementById('startDate').value;
+            if (this.value < startDate) {
+                alert('Due date cannot be before start date');
+                this.value = startDate;
+            }
+        });
 
-    document.getElementById('startDate').addEventListener('change', function() {
-        const today = new Date().toISOString().split('T')[0];
-        if (this.value < today) {
-            alert('Start date cannot be in the past');
-            this.value = today;
-        }
-        
-        const dueDate = document.getElementById('dueDate').value;
-        if (dueDate < this.value) {
-            document.getElementById('dueDate').value = this.value;
-        }
-    });
-    
-    // Date shortcuts
-    const dateShortcuts = document.querySelectorAll('.date-shortcut');
-    dateShortcuts.forEach(btn => {
-        btn.addEventListener('click', function() {
-            const startDate = this.getAttribute('data-start');
-            const dueDate = this.getAttribute('data-due');
-            
-            document.getElementById('startDate').value = startDate;
-            document.getElementById('dueDate').value = dueDate;
+        document.getElementById('startDate').addEventListener('change', function() {
+            const today = new Date().toISOString().split('T')[0];
+            if (this.value < today) {
+                alert('Start date cannot be in the past');
+                this.value = today;
+            }
+
+            const dueDate = document.getElementById('dueDate').value;
+            if (dueDate < this.value) {
+                document.getElementById('dueDate').value = this.value;
+            }
+        });
+
+        // Date shortcuts
+        const dateShortcuts = document.querySelectorAll('.date-shortcut');
+        dateShortcuts.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const startDate = this.getAttribute('data-start');
+                const dueDate = this.getAttribute('data-due');
+
+                document.getElementById('startDate').value = startDate;
+                document.getElementById('dueDate').value = dueDate;
+            });
         });
     });
-});
 </script>

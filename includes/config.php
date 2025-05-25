@@ -90,62 +90,84 @@ if (session_status() == PHP_SESSION_NONE) {
 }
 
 // Helper function to check if user is logged in
-function isLoggedIn() {
+function isLoggedIn()
+{
     return isset($_SESSION['user_id']);
 }
 
 // Helper function to redirect if not logged in
-function requireLogin() {
+function requireLogin()
+{
     if (!isLoggedIn()) {
-        header("Location: login.php");
+        // Get the current directory depth to create proper path
+        $scriptPath = $_SERVER['SCRIPT_FILENAME'];
+        if (
+            strpos($scriptPath, 'views/') !== false ||
+            strpos($scriptPath, 'tasks/') !== false ||
+            strpos($scriptPath, 'projects/') !== false ||
+            strpos($scriptPath, 'sections/') !== false ||
+            strpos($scriptPath, 'api/') !== false
+        ) {
+            header("Location: ../auth/login.php");
+        } else {
+            header("Location: auth/login.php");
+        }
         exit;
     }
 }
 
 // Helper function to get current user ID
-function getCurrentUserId() {
+function getCurrentUserId()
+{
     return isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null;
 }
 
 // Function to safely get POST data
-function getPostData($key, $default = '') {
+function getPostData($key, $default = '')
+{
     return isset($_POST[$key]) ? htmlspecialchars(trim($_POST[$key])) : $default;
 }
 
 // Function to safely get GET data
-function getGetData($key, $default = '') {
+function getGetData($key, $default = '')
+{
     return isset($_GET[$key]) ? htmlspecialchars(trim($_GET[$key])) : $default;
 }
 
 // Current date helper
-function getCurrentDate() {
+function getCurrentDate()
+{
     return date('Y-m-d');
 }
 
 // Format date for display
-function formatDate($date) {
+function formatDate($date)
+{
     if (!$date) return '';
     $timestamp = strtotime($date);
     return date('M d', $timestamp);
 }
 
 // Check if a date is today
-function isToday($date) {
+function isToday($date)
+{
     return $date == date('Y-m-d');
 }
 
 // Check if a date is tomorrow
-function isTomorrow($date) {
+function isTomorrow($date)
+{
     return $date == date('Y-m-d', strtotime('+1 day'));
 }
 
 // Check if a date is in the past
-function isPast($date) {
+function isPast($date)
+{
     return $date < date('Y-m-d');
 }
 
 // Get day of the week
-function getDayOfWeek($date) {
+function getDayOfWeek($date)
+{
     return date('l', strtotime($date));
 }
-?>
