@@ -1,0 +1,87 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background: linear-gradient(to bottom right, #ADD8E6, #9370DB);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+}
+
+.forgotpw-container {
+    background-color: rgba(255, 255, 255, 0.3);
+    padding: 40px;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 400px;
+}
+
+.forgotpw-form h2 {
+    margin-bottom: 20px;
+    color: #202020;
+    text-align: center; /* Căn giữa tiêu đề */
+    margin-bottom: 30px; /* Khoảng cách với phần tử tiếp theo */
+}
+
+.instruction-text {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 25px; /* Khoảng cách với input email */
+    line-height: 1.5;
+}
+
+.input-group {
+    position: relative;
+    margin-bottom: 20px; /* Tăng khoảng cách dưới input */
+    text-align: left; /* Đưa label và input về bên trái */
+}
+
+.input-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 14px;
+    color: #333;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.reset-password-btn {
+    width: 100%;
+    padding: 12px;
+    background-color: #007bff;
+    color: white;
+    font-weight: bold;
+    border: none;
+    border-radius: 6px;
+    margin-top: 10px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.reset-password-btn:hover {
+    background-color: #0056b3;
+}
+
+.back-to-login-text {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 14px;
+}
+
+.back-to-login-text a {
+    color: #db4c3f;
+    text-decoration: none;
+    font-weight: bold;
+}
