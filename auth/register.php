@@ -66,65 +66,57 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register - Todoist Clone</title>
+    <title>TamaEagle Register</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="assets/css/styles.css">
+    <link rel="stylesheet" href="../assets/css/Login/Register.css" />
 </head>
 
 <body>
-    <div class="auth-container w-100 d-flex justify-content-center align-items-center vh-100">
-        <div class="auth-card">
-            <div class="auth-header">
-                <h1><i class="fa fa-check-circle"></i> Todoist Clone</h1>
-                <p>Create a new account</p>
-            </div>
+    <div class="register-container">
+            <form class="register-form">
+                <h2>Sign Up</h2>
 
-            <?php if (!empty($error)): ?>
-                <div class="alert alert-danger"><?php echo $error; ?></div>
-            <?php endif; ?>
-
-            <?php if (!empty($success)): ?>
-                <div class="alert alert-success"><?php echo $success; ?></div>
-            <?php endif; ?>
-
-            <form class="auth-form" method="post" action="register.php">
-                <div class="mb-3">
-                    <label for="username" class="form-label">Username</label>
-                    <input type="text" class="form-control" id="username" name="username" required value="<?php echo isset($_POST['username']) ? htmlspecialchars($_POST['username']) : ''; ?>">
+                <div class="input-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" required placeholder="Enter your email" />
                 </div>
 
-                <div class="mb-3">
-                    <label for="email" class="form-label">Email</label>
-                    <input type="email" class="form-control" id="email" name="email" required value="<?php echo isset($_POST['email']) ? htmlspecialchars($_POST['email']) : ''; ?>">
+                <div class="input-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" required placeholder="Enter your password" />
+                    <span class="toggle-password" data-target="password">Show</span>
                 </div>
 
-                <div class="mb-3">
-                    <label for="password" class="form-label">Password</label>
-                    <input type="password" class="form-control" id="password" name="password" required>
+                <div class="input-group">
+                    <label for="confirm-password">Confirm Password</label>
+                    <input type="password" id="confirm-password" required placeholder="Confirm your password" />
+                    <span class="toggle-password" data-target="confirm-password">Show</span>
                 </div>
 
-                <div class="mb-3">
-                    <label for="confirm_password" class="form-label">Confirm Password</label>
-                    <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                <button type="button" class="register-btn" id="submit">Sign up</button>
+
+                <div class="divider">
+                    <span>or</span>
                 </div>
 
-                <div class="d-grid">
-                    <button type="submit" class="btn btn-primary">Register</button>
-                </div>
+                <button type="button" class="google-btn">
+                    <img src="../assets/icons/google-logo.png" alt="Google" width="15" height="15"
+                        style="vertical-align: middle; margin-right: 2px;">
+                    Continue with Google
+                </button>
+
+                <p class="Login-text">
+                    Already have an account? <a href="login.php">Sign in</a>
+                </p>
             </form>
-
-            <div class="auth-footer">
-                <p>Already have an account? <a href="login.php">Login</a></p>
-            </div>
         </div>
-    </div>
 
     <!-- Bootstrap JS Bundle with Popper -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../assets/js/Register.js"></script>
 </body>
 
 </html>

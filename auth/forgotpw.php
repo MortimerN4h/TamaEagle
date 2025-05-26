@@ -5,8 +5,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>TamaEagle Forgot Password</title>
-    <link rel="stylesheet" href="../../css/Login/ForgotPW.css" />
-    <script type="module" src="../../js/Login/ForgotPW.js" defer></script>
+    <link rel="stylesheet" href="../assets/css/Login/ForgotPW.css" />
 </head>
 
 <body>
@@ -26,10 +25,11 @@
             <button type="submit" class="reset-password-btn" id="resetPassword">Send reset link</button>
 
             <p class="back-to-login-text">
-                <a href="Login.html">Back to sign in</a>
+                <a href="login.php">Back to sign in</a>
             </p>
         </form>
     </div>
+    <script type="module" src="../assets/js/ForgotPW.js" defer></script>
 </body>
 
 </html>
