@@ -11,7 +11,10 @@
         <!-- jQuery UI for Drag & Drop -->
         <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
         <!-- Bootstrap JS Bundle with Popper -->
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>        <!-- Firebase SDK -->
+        <script type="module" src="../assets/js/Login/firebase-client.js"></script>
+        <!-- Task Management -->
+        <script src="../assets/js/task-management.js"></script>
         <!-- Custom JS -->
         <script src="../assets/js/main.js"></script>
         </body>

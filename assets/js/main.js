@@ -1,4 +1,8 @@
-$(document).ready(function () {
+/**
+ * TamaEagle Main JavaScript
+ * Firebase version - Vanilla JavaScript
+ */
+document.addEventListener('DOMContentLoaded', function() {
     // Initialize tooltips
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
@@ -6,168 +10,106 @@ $(document).ready(function () {
     });
 
     // Toggle sidebar on mobile
-    $('#sidebarToggle').on('click', function () {
-        $('.sidebar').toggleClass('show');
-        $('.content-container').toggleClass('sidebar-open');
-    });
-
-    // Task form submit handler
-    $('#taskForm').on('submit', function () {
-        // Validate dates
-        const startDate = $('#startDate').val();
-        const dueDate = $('#dueDate').val();
-        const today = new Date().toISOString().split('T')[0];
-
-        if (startDate < today) {
-            alert('Start date cannot be in the past');
-            return false;
-        }
-
-        if (dueDate < startDate) {
-            alert('Due date cannot be before start date');
-            return false;
-        }
-
-        return true;
-    });
-
-    // Edit task button handler
-    $('.edit-task').on('click', function (e) {
-        e.preventDefault();
-        const taskId = $(this).data('id');
-        const taskName = $(this).data('name');
-        const taskDesc = $(this).data('description');
-        const startDate = $(this).data('start-date');
-        const dueDate = $(this).data('due-date');
-        const priority = $(this).data('priority');
-        const projectId = $(this).data('project-id');
-        const sectionId = $(this).data('section-id');
-
-        // Set modal values
-        $('#taskModalLabel').text('Edit Task');
-        $('#taskId').val(taskId);
-        $('#taskName').val(taskName);
-        $('#taskDescription').val(taskDesc);
-        $('#startDate').val(startDate);
-        $('#dueDate').val(dueDate);
-        $('#priority').val(priority);
-        $('#project').val(projectId);
-        $('#sectionId').val(sectionId);
-        // Change form action
-        $('#taskForm').attr('action', '../tasks/edit-task.php');
-
-        // Show modal
-        const taskModal = new bootstrap.Modal(document.getElementById('taskModal'));
-        taskModal.show();
-    });
-    // Complete task button handler
-    $('.complete-task').on('click', function (e) {
-        const taskId = $(this).data('id');
-        window.location.href = '../tasks/complete-task.php?id=' + taskId;
-    });
-
-    // Add section handler
-    $('.add-section').on('click', function () {
-        const projectId = $(this).data('project-id');
-        const sectionName = prompt('Enter section name:');
-        if (sectionName) {
-            window.location.href = '../sections/add-section.php?project_id=' + projectId + '&name=' + encodeURIComponent(sectionName);
-        }
-    });
-
-    // Initialize sortable lists for drag and drop
-    if ($('.sortable-tasks').length) {
-        $('.sortable-tasks').sortable({
-            connectWith: '.sortable-tasks',
-            placeholder: 'task-item task-placeholder',
-            handle: '.drag-handle',
-            start: function (e, ui) {
-                ui.item.addClass('dragging');
-            },
-            stop: function (e, ui) {
-                ui.item.removeClass('dragging');
-
-                // Get the new positions
-                const taskId = ui.item.data('id');
-                const sectionId = ui.item.closest('.sortable-tasks').data('section-id');
-                const position = ui.item.index();
-                // Send AJAX request to update position
-                $.ajax({
-                    url: '../api/update-task-position.php',
-                    type: 'POST',
-                    data: {
-                        task_id: taskId,
-                        section_id: sectionId,
-                        position: position
-                    },
-                    success: function (response) {
-                        console.log('Position updated successfully');
-                    },
-                    error: function (xhr, status, error) {
-                        console.error('Error updating position:', error);
-                    }
-                });
-            }
-        }).disableSelection();
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    if (sidebarToggle) {
+        sidebarToggle.addEventListener('click', function () {
+            const sidebar = document.querySelector('.sidebar');
+            const contentContainer = document.querySelector('.content-container');
+            if (sidebar) sidebar.classList.toggle('show');
+            if (contentContainer) contentContainer.classList.toggle('sidebar-open');
+        });
     }
 
-    // Initialize sortable sections for drag and drop
-    if ($('.sortable-sections').length) {
-        $('.sortable-sections').sortable({
-            handle: '.section-drag-handle',
-            start: function (e, ui) {
-                ui.item.addClass('dragging');
-            },
-            stop: function (e, ui) {
-                ui.item.removeClass('dragging');
-
-                // Get the new positions
-                const sectionId = ui.item.data('section-id');
-                const position = ui.item.index();
-                // Send AJAX request to update position
-                $.ajax({
-                    url: '../api/update-section-position.php',
-                    type: 'POST',
-                    data: {
-                        section_id: sectionId,
-                        position: position
-                    },
-                    success: function (response) {
-                        console.log('Section position updated successfully');
-                    },
-                    error: function (xhr, status, error) {
-                        console.error('Error updating section position:', error);
-                    }
-                });
+    // Task form date validation
+    const taskForm = document.getElementById('taskForm');
+    if (taskForm) {
+        taskForm.addEventListener('submit', function(e) {
+            // Get form data
+            const startDate = document.getElementById('startDate').value;
+            const dueDate = document.getElementById('dueDate').value;
+            const today = new Date().toISOString().split('T')[0];
+            
+            // Basic validation
+            if (startDate < today) {
+                e.preventDefault();
+                alert('Start date cannot be in the past');
+                return false;
             }
-        }).disableSelection();
+            
+            if (dueDate < startDate) {
+                e.preventDefault();
+                alert('Due date cannot be before start date');
+                return false;
+            }
+        });
     }
 
     // Reset task form when opening the modal for a new task
-    $('#addTaskBtn').on('click', function () {
-        $('#taskModalLabel').text('Add New Task');
-        $('#taskForm').attr('action', '../tasks/add-task.php');
-        $('#taskId').val('');
-        $('#taskName').val('');
-        $('#taskDescription').val('');
-        $('#startDate').val(new Date().toISOString().split('T')[0]);
-        $('#dueDate').val(new Date().toISOString().split('T')[0]);
-        $('#priority').val(0);
-        $('#project').val('');
-        $('#sectionId').val('');
-    });
-    // Date navigation buttons
-    $('.date-nav-prev').on('click', function () {
-        const currentWeekStart = $(this).data('current');
-        window.location.href = 'upcoming.php?week=' + currentWeekStart;
+    const addTaskBtn = document.getElementById('addTaskBtn');
+    if (addTaskBtn) {
+        addTaskBtn.addEventListener('click', function () {
+            const taskModalLabel = document.getElementById('taskModalLabel');
+            const taskForm = document.getElementById('taskForm');
+            const taskId = document.getElementById('taskId');
+            const taskName = document.getElementById('taskName');
+            const taskDescription = document.getElementById('taskDescription');
+            const startDate = document.getElementById('startDate');
+            const dueDate = document.getElementById('dueDate');
+            const priority = document.getElementById('priority');
+            const project = document.getElementById('project');
+            const sectionId = document.getElementById('sectionId');
+
+            if (taskModalLabel) taskModalLabel.textContent = 'Add New Task';
+            if (taskForm) taskForm.setAttribute('action', '../tasks/add-task-firebase.php');
+            if (taskId) taskId.value = '';
+            if (taskName) taskName.value = '';
+            if (taskDescription) taskDescription.value = '';
+            if (startDate) startDate.value = new Date().toISOString().split('T')[0];
+            if (dueDate) dueDate.value = new Date().toISOString().split('T')[0];
+            if (priority) priority.value = '0';
+            if (project) project.value = '';
+            if (sectionId) sectionId.value = '';
+        });
+    }
+
+    // Date navigation buttons for upcoming view
+    const datePrevBtns = document.querySelectorAll('.date-nav-prev');
+    datePrevBtns.forEach(btn => {
+        btn.addEventListener('click', function () {
+            const currentWeekStart = this.getAttribute('data-current');
+            window.location.href = 'upcoming.php?week=' + currentWeekStart;
+        });
     });
 
-    $('.date-nav-next').on('click', function () {
-        const nextWeekStart = $(this).data('next');
-        window.location.href = 'upcoming.php?week=' + nextWeekStart;
+    const dateNextBtns = document.querySelectorAll('.date-nav-next');
+    dateNextBtns.forEach(btn => {
+        btn.addEventListener('click', function () {
+            const nextWeekStart = this.getAttribute('data-next');
+            window.location.href = 'upcoming.php?week=' + nextWeekStart;
+        });
     });
 
-    $('.date-nav-today').on('click', function () {
-        window.location.href = 'upcoming.php';
+    const dateTodayBtns = document.querySelectorAll('.date-nav-today');
+    dateTodayBtns.forEach(btn => {
+        btn.addEventListener('click', function () {
+            window.location.href = 'upcoming.php';
+        });
     });
+
+    // Add section handler
+    const addSectionBtns = document.querySelectorAll('.add-section');
+    addSectionBtns.forEach(btn => {
+        btn.addEventListener('click', function () {
+            const projectId = this.getAttribute('data-project-id');
+            const sectionName = prompt('Enter section name:');
+            if (sectionName) {
+                window.location.href = '../sections/add-section.php?project_id=' + projectId + '&name=' + encodeURIComponent(sectionName);
+            }
+        });
+    });
+
+    // Note: Drag and drop functionality removed for Firebase version
+    // If needed, implement with modern drag and drop API instead of jQuery UI
+    
+    console.log('TamaEagle main.js loaded (Firebase version)');
 });

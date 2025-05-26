@@ -5,10 +5,10 @@ requireLogin();
 
 $userId = getCurrentUserId();
 
-// Get today's tasks
-$todayTasks = getTodayTasks($userId);
+// Get upcoming tasks
+$upcomingTasks = getUpcomingTasks($userId);
 
-$pageTitle = 'Today';
+$pageTitle = 'Upcoming';
 include '../includes/header.php';
 ?>
 
@@ -20,9 +20,9 @@ include '../includes/header.php';
         </button>
     </div>
 
-    <?php if (count($todayTasks) > 0): ?>
-        <ul class="task-list" id="today-tasks">
-            <?php foreach ($todayTasks as $task): ?>
+    <?php if (count($upcomingTasks) > 0): ?>
+        <ul class="task-list" id="upcoming-tasks">
+            <?php foreach ($upcomingTasks as $task): ?>
                 <?php
                 $priorityClass = 'priority-' . ($task['priority'] ?? 'medium');
                 ?>
@@ -36,9 +36,11 @@ include '../includes/header.php';
                             <?php if (!empty($task['description'])): ?>
                                 <p class="task-description"><?php echo htmlspecialchars($task['description']); ?></p>
                             <?php endif; ?>
-                            <span class="task-due-date">
-                                Due: Today
-                            </span>
+                            <?php if (!empty($task['due_date'])): ?>
+                                <span class="task-due-date">
+                                    Due: <?php echo date('M j, Y', strtotime($task['due_date'])); ?>
+                                </span>
+                            <?php endif; ?>
                         </div>
                         <div class="task-actions">
                             <button class="btn btn-sm btn-outline-secondary edit-task" data-task-id="<?php echo $task['id']; ?>">
@@ -55,12 +57,12 @@ include '../includes/header.php';
     <?php else: ?>
         <div class="empty-state">
             <div class="empty-state-icon">
-                <i class="bi bi-calendar-day"></i>
+                <i class="bi bi-calendar-week"></i>
             </div>
-            <h3>No tasks due today</h3>
-            <p>You're all caught up for today!</p>
+            <h3>No upcoming tasks</h3>
+            <p>You don't have any tasks scheduled for the next 7 days.</p>
             <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#taskModal">
-                <i class="bi bi-plus"></i> Add Task for Today
+                <i class="bi bi-plus"></i> Add Task
             </button>
         </div>
     <?php endif; ?>

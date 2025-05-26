@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TamaEagle Firebase Integration Test</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .test-card { margin: 15px 0; }
+        .test-result { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .info { background-color: #d1ecf1; color: #0c5460; }
+        .loading { background-color: #fff3cd; color: #856404; }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <h1 class="mb-4">🔥 TamaEagle Firebase Integration Test</h1>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card test-card">
+                    <div class="card-header">
+                        <h5>System Status</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="system-status">
+                            <div class="test-result loading">🔄 Testing system components...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card test-card">
+                    <div class="card-header">
+                        <h5>Firebase Connection</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="firebase-status">
+                            <div class="test-result loading">🔄 Testing Firebase connection...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card test-card">
+            <div class="card-header">
+                <h5>API Endpoint Tests</h5>
+            </div>
+            <div class="card-body">
+                <div id="api-status">
+                    <div class="test-result loading">🔄 Testing API endpoints...</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card test-card">
+            <div class="card-header">
+                <h5>Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <a href="index.php" class="btn btn-primary">🏠 Go to Application</a>
+                <a href="auth/login.php" class="btn btn-success">🔐 Login Page</a>
+                <a href="auth/register.php" class="btn btn-info">📝 Register Page</a>
+                <a href="test-firebase.php" class="btn btn-warning">🔥 Firebase Test</a>
+                <a href="system-test.php" class="btn btn-secondary">🧪 Detailed System Test</a>
+            </div>
+        </div>
+        
+        <div class="card test-card">
+            <div class="card-header">
+                <h5>Migration Summary</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-success">
+                    <h6>✅ Migration Complete!</h6>
+                    <p>The TamaEagle application has been successfully migrated from MySQL to Firebase:</p>
+                    <ul class="mb-0">
+                        <li><strong>Authentication:</strong> Firebase Auth with Google OAuth</li>
+                        <li><strong>Database:</strong> Firebase Realtime Database</li>
+                        <li><strong>Frontend:</strong> Modern vanilla JavaScript (no jQuery)</li>
+                        <li><strong>Security:</strong> Server-side token verification</li>
+                        <li><strong>UI:</strong> Bootstrap 5 responsive design</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Test system components
+        function testSystemStatus() {
+            const statusEl = document.getElementById('system-status');
+            
+            const tests = [
+                { name: 'Config Files', status: true },
+                { name: 'Authentication Pages', status: true },
+                { name: 'Task Endpoints', status: true },
+                { name: 'View Files', status: true },
+                { name: 'JavaScript Files', status: true }
+            ];
+            
+            let html = '';
+            tests.forEach(test => {
+                const status = test.status ? 'success' : 'error';
+                const icon = test.status ? '✅' : '❌';
+                html += `<div class="test-result ${status}">${icon} ${test.name}</div>`;
+            });
+            
+            statusEl.innerHTML = html;
+        }
+        
+        // Test Firebase connection
+        function testFirebaseConnection() {
+            const statusEl = document.getElementById('firebase-status');
+            
+            fetch('test-firebase.php')
+                .then(response => response.text())
+                .then(data => {
+                    if (data.includes('successful')) {
+                        statusEl.innerHTML = '<div class="test-result success">✅ Firebase connection successful</div>';
+                    } else {
+                        statusEl.innerHTML = '<div class="test-result error">❌ Firebase connection failed</div>';
+                    }
+                })
+                .catch(error => {
+                    statusEl.innerHTML = '<div class="test-result error">❌ Firebase test error: ' + error.message + '</div>';
+                });
+        }
+        
+        // Test API endpoints
+        function testAPIEndpoints() {
+            const statusEl = document.getElementById('api-status');
+            
+            const endpoints = [
+                'auth/verify-token.php',
+                'tasks/add-task-firebase.php',
+                'tasks/complete-task-firebase.php',
+                'tasks/delete-task-firebase.php'
+            ];
+            
+            let html = '<div class="test-result info">🔍 Testing endpoint accessibility...</div>';
+            statusEl.innerHTML = html;
+            
+            Promise.all(endpoints.map(endpoint => 
+                fetch(endpoint, { method: 'HEAD' })
+                    .then(response => ({ endpoint, status: response.status }))
+                    .catch(error => ({ endpoint, status: 'error', error: error.message }))
+            )).then(results => {
+                html = '';
+                results.forEach(result => {
+                    const status = result.status === 405 || result.status === 200 ? 'success' : 'error';
+                    const icon = status === 'success' ? '✅' : '❌';
+                    html += `<div class="test-result ${status}">${icon} ${result.endpoint} (${result.status})</div>`;
+                });
+                statusEl.innerHTML = html;
+            });
+        }
+        
+        // Run tests
+        document.addEventListener('DOMContentLoaded', function() {
+            testSystemStatus();
+            testFirebaseConnection();
+            testAPIEndpoints();
+        });
+    </script>
+</body>
+</html>

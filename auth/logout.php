@@ -1,5 +1,5 @@
 <?php
-require_once '../includes/config.php';
+require_once '../includes/config-firebase.php';
 
 // Destroy the session
 session_start();

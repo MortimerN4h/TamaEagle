@@ -13,7 +13,7 @@ body {
     height: 100vh;
 }
 
-.register-container {
+.Login-container {
     background-color: rgba(255, 255, 255, 0.3);
     padding: 40px;
     border-radius: 10px;
@@ -22,7 +22,7 @@ body {
     max-width: 400px;
 }
 
-.register-form h2 {
+.Login-form h2 {
     text-align: center;
     margin-bottom: 20px;
     color: #202020;
@@ -48,7 +48,7 @@ body {
     font-size: 14px;
 }
 
-.register-btn {
+.Login-btn {
     width: 100%;
     padding: 12px;
     background-color: #007bff;
@@ -61,19 +61,38 @@ body {
     transition: background-color 0.3s ease;
 }
 
-.register-btn:hover {
+.Login-btn:hover {
     background-color: #0056b3;
 }
 
-.options {
-    text-align: center;
-    margin-top: 10px;
+.login-options {
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center;
+    margin-top: 15px; 
+    margin-bottom: 20px;
+    font-size: 14px;
 }
 
-.options a {
+.remember-me {
+    display: flex;
+    align-items: center;
+}
+
+.remember-me input[type="checkbox"] {
+    width: auto;
+    margin-right: 5px; 
+    padding: 0; 
+}
+
+.login-options a {
     color: #db4c3f;
     text-decoration: none;
-    font-size: 14px;
+    font-weight: bold;
+}
+
+.login-options a:hover {
+    text-decoration: underline;
 }
 
 .divider {
@@ -96,7 +115,7 @@ body {
 .divider::before {
     content: "";
     flex-grow: 1;
-    height: 1.5px;
+    height: 1px;
     background: #b1a1a1;
     display: block;
 }
@@ -104,7 +123,7 @@ body {
 .divider::after {
     content: "";
     flex-grow: 1;
-    height: 1.5px;
+    height: 1px;
     background: #b1a1a1;
     display: block;
 }
@@ -125,13 +144,13 @@ body {
     background-color: #e03e00;
 }
 
-.Login-text {
+.signup-text {
     text-align: center;
     margin-top: 20px;
     font-size: 14px;
 }
 
-.Login-text a {
+.signup-text a {
     color: #db4c3f;
     text-decoration: none;
     font-weight: bold;
@@ -147,4 +166,25 @@ body {
     user-select: none;
     font-size: 0.9rem;
     color: #555;
+}
+
+/* Error and Success Messages */
+.error-message, .success-message {
+    padding: 12px;
+    border-radius: 5px;
+    margin-bottom: 15px;
+    font-size: 14px;
+    text-align: center;
+}
+
+.error-message {
+    background-color: rgba(255, 238, 238, 0.9);
+    color: #d32f2f;
+    border: 1px solid rgba(255, 204, 204, 0.8);
+}
+
+.success-message {
+    background-color: rgba(232, 245, 233, 0.9);
+    color: #2e7d32;
+    border: 1px solid rgba(204, 255, 204, 0.8);
 }
