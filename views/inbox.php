@@ -1,83 +1,47 @@
 <?php
-require_once '../includes/config-firebase.php';
-require_once '../includes/firebase-tasks.php';
+require_once '../includes/config.php';
 requireLogin();
 
 $userId = getCurrentUserId();
 
-// Get inbox tasks (tasks with no project assigned)
-$tasks = getUserTasks($userId, false);
-$inboxTasks = [];
+// Process task sorting
+$sort = getGetData('sort', 'position');
+$order = getGetData('order', 'asc');
 
-foreach ($tasks as $task) {
-    if (empty($task['project_id'])) {
-        $inboxTasks[] = $task;
-    }
+// Valid sort options
+$validSortOptions = ['position', 'name', 'due_date', 'priority'];
+if (!in_array($sort, $validSortOptions)) {
+    $sort = 'position';
 }
 
+// Valid order options
+$validOrderOptions = ['asc', 'desc'];
+if (!in_array($order, $validOrderOptions)) {
+    $order = 'asc';
+}
+
+// Get inbox tasks (tasks with no project assigned)
+$tasksQuery = "
+    SELECT t.*, p.name as project_name, p.color as project_color 
+    FROM tasks t
+    LEFT JOIN projects p ON t.project_id = p.id
+    WHERE t.user_id = ? AND t.project_id IS NULL AND t.is_completed = 0
+    ORDER BY t.$sort $order
+";
+
+$stmt = $conn->prepare($tasksQuery);
+$stmt->bind_param("i", $userId);
+$stmt->execute();
+$tasksResult = $stmt->get_result();
+
+// Get tasks count
+$taskCount = $tasksResult->num_rows;
+
+// Page title
 $pageTitle = 'Inbox';
+
+// Include header and sidebar
 include '../includes/header.php';
-?>
-
-<div class="container-fluid py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="page-title"><?php echo $pageTitle; ?></h1>
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#taskModal">
-            <i class="bi bi-plus"></i> Add Task
-        </button>
-    </div>
-
-    <?php if (count($inboxTasks) > 0): ?>
-        <ul class="task-list" id="inbox-tasks">
-            <?php foreach ($inboxTasks as $task): ?>
-                <?php
-                $isPastDue = !empty($task['due_date']) && strtotime($task['due_date']) < strtotime('today');
-                $priorityClass = 'priority-' . ($task['priority'] ?? 'medium');
-                ?>
-                <li class="task-item <?php echo $priorityClass; ?>" data-id="<?php echo $task['id']; ?>">
-                    <div class="task-header">
-                        <div class="task-checkbox">
-                            <input type="checkbox" class="complete-task" data-task-id="<?php echo $task['id']; ?>">
-                        </div>
-                        <div class="task-content">
-                            <h5 class="task-title"><?php echo htmlspecialchars($task['title']); ?></h5>
-                            <?php if (!empty($task['description'])): ?>
-                                <p class="task-description"><?php echo htmlspecialchars($task['description']); ?></p>
-                            <?php endif; ?>
-                            <?php if (!empty($task['due_date'])): ?>
-                                <span class="task-due-date <?php echo $isPastDue ? 'text-danger' : ''; ?>">
-                                    Due: <?php echo date('M j, Y', strtotime($task['due_date'])); ?>
-                                </span>
-                            <?php endif; ?>
-                        </div>
-                        <div class="task-actions">
-                            <button class="btn btn-sm btn-outline-secondary edit-task" data-task-id="<?php echo $task['id']; ?>">
-                                <i class="bi bi-pencil"></i>
-                            </button>
-                            <button class="btn btn-sm btn-outline-danger delete-task" data-task-id="<?php echo $task['id']; ?>">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                        </div>
-                    </div>
-                </li>
-            <?php endforeach; ?>
-        </ul>
-    <?php else: ?>
-        <div class="empty-state">
-            <div class="empty-state-icon">
-                <i class="bi bi-inbox"></i>
-            </div>
-            <h3>Your inbox is empty</h3>
-            <p>Add some tasks to get started!</p>
-            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#taskModal">
-                <i class="bi bi-plus"></i> Add Your First Task
-            </button>
-        </div>
-    <?php endif; ?>
-</div>
-
-<?php include '../includes/task-modal.php'; ?>
-<?php include '../includes/footer.php'; ?>
 ?>
 
 <div class="container-fluid py-4">

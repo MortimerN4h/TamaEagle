@@ -85,24 +85,3 @@ body {
     text-decoration: none;
     font-weight: bold;
 }
-
-/* Error and Success Messages */
-.error-message, .success-message {
-    padding: 12px;
-    border-radius: 5px;
-    margin-bottom: 15px;
-    font-size: 14px;
-    text-align: center;
-}
-
-.error-message {
-    background-color: rgba(255, 238, 238, 0.9);
-    color: #d32f2f;
-    border: 1px solid rgba(255, 204, 204, 0.8);
-}
-
-.success-message {
-    background-color: rgba(232, 245, 233, 0.9);
-    color: #2e7d32;
-    border: 1px solid rgba(204, 255, 204, 0.8);
-}

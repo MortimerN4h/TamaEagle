@@ -1,7 +1,17 @@
 <?php
-// Get user's projects for dropdown using Firebase
+// Get user's projects for dropdown
 $userId = getCurrentUserId();
-$projects = getUserProjects($userId);
+$projectsQuery = "SELECT id, name FROM projects WHERE user_id = ? ORDER BY name ASC";
+$stmt = $conn->prepare($projectsQuery);
+$stmt->bind_param("i", $userId);
+$stmt->execute();
+$projectsResult = $stmt->get_result();
+
+// Store projects in array for dropdown
+$projects = [];
+while ($row = $projectsResult->fetch_assoc()) {
+    $projects[] = $row;
+}
 
 // Get current date for default values
 $currentDate = date('Y-m-d');
@@ -17,7 +27,7 @@ $nextSunday = date('Y-m-d', strtotime('next Sunday'));
                 <h5 class="modal-title" id="taskModalLabel">Add New Task</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="taskForm" action="../tasks/add-task-firebase.php" method="post">
+            <form id="taskForm" action="../tasks/add-task.php" method="post">
                 <div class="modal-body">
                     <input type="hidden" id="taskId" name="task_id">
                     <input type="hidden" id="sectionId" name="section_id">
