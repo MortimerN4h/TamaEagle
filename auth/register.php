@@ -26,37 +26,61 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     } elseif (strlen($password) < 6) {
         $error = 'Password must be at least 6 characters long';
     } else {
-        // Check if username or email already exists
-        $query = "SELECT id FROM users WHERE username = ? OR email = ? LIMIT 1";
-        $stmt = $conn->prepare($query);
-        $stmt->bind_param("ss", $username, $email);
-        $stmt->execute();
-        $result = $stmt->get_result();
-
-        if ($result->num_rows > 0) {
-            $error = 'Username or email already exists';
-        } else {
-            // Create user
-            $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-            $query = "INSERT INTO users (username, email, password) VALUES (?, ?, ?)";
-            $stmt = $conn->prepare($query);
-            $stmt->bind_param("sss", $username, $email, $hashedPassword);
-
-            if ($stmt->execute()) {
-                $userId = $stmt->insert_id;
-
+        try {
+            // Check if username already exists in Firestore
+            $usernameCheck = $firestore->collection('users')
+                ->where('username', '==', $username)
+                ->limit(1)
+                ->documents();
+            
+            $usernameExists = false;
+            foreach ($usernameCheck as $doc) {
+                $usernameExists = true;
+                break;
+            }
+            
+            if ($usernameExists) {
+                $error = 'Username already exists';
+            } else {
+                // Create user in Firebase Authentication
+                $userProperties = [
+                    'email' => $email,
+                    'password' => $password,
+                    'displayName' => $username,
+                ];
+                
+                $createdUser = $auth->createUser($userProperties);
+                $userId = $createdUser->uid;
+                
+                // Store additional user data in Firestore
+                $userData = [
+                    'username' => $username,
+                    'email' => $email,
+                    'created_at' => firestoreServerTimestamp()
+                ];
+                
+                $firestore->collection('users')->document($userId)->set($userData);
+                
                 // Create default Inbox project for user
-                $projectQuery = "INSERT INTO projects (user_id, name, color) VALUES (?, 'Inbox', '#808080')";
-                $projectStmt = $conn->prepare($projectQuery);
-                $projectStmt->bind_param("i", $userId);
-                $projectStmt->execute();
+                $inboxProject = [
+                    'user_id' => $userId,
+                    'name' => 'Inbox',
+                    'color' => '#808080'
+                ];
+                
+                $projectId = addDocument('projects', $inboxProject);
 
                 $success = 'Registration successful! You can now login.';
-            } else {
-                $error = 'Error creating account. Please try again.';
             }
+        } catch (Exception $e) {
+            $error = 'Error creating account: ' . $e->getMessage();
         }
     }
+}
+
+// Helper function to create a Firestore server timestamp
+function firestoreServerTimestamp() {
+    return ['@type' => 'firestore.googleapis.com/Timestamp', 'value' => ['seconds' => time(), 'nanos' => 0]];
 }
 ?>
 

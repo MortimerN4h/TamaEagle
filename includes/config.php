@@ -1,92 +1,22 @@
 <?php
-// Database configuration
-$db_host = 'localhost';
-$db_user = 'root';
-$db_pass = '';
-$db_name = 'tamaeagle';
-
-// Create connection
-$conn = new mysqli($db_host, $db_user, $db_pass);
-
-// Check connection
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
-
-// Create database if not exists
-$sql = "CREATE DATABASE IF NOT EXISTS $db_name";
-if ($conn->query($sql) === TRUE) {
-    // echo "Database created successfully or already exists";
-} else {
-    die("Error creating database: " . $conn->error);
-}
-
-// Select the database
-$conn->select_db($db_name);
-
-// Create tables if they don't exist
-$sql = "
-CREATE TABLE IF NOT EXISTS users (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    username VARCHAR(50) NOT NULL UNIQUE,
-    email VARCHAR(100) NOT NULL UNIQUE,
-    password VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE IF NOT EXISTS projects (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    name VARCHAR(100) NOT NULL,
-    color VARCHAR(20) DEFAULT '#ff0000',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-);
-
-CREATE TABLE IF NOT EXISTS sections (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    project_id INT NOT NULL,
-    name VARCHAR(100) NOT NULL,
-    position INT DEFAULT 0,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
-);
-
-CREATE TABLE IF NOT EXISTS tasks (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    project_id INT,
-    section_id INT DEFAULT NULL,
-    name VARCHAR(255) NOT NULL,
-    description TEXT,
-    start_date DATE,
-    due_date DATE,
-    priority INT DEFAULT 0,
-    position INT DEFAULT 0,
-    is_completed BOOLEAN DEFAULT FALSE,
-    completed_at TIMESTAMP NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE SET NULL,
-    FOREIGN KEY (section_id) REFERENCES sections(id) ON DELETE SET NULL
-);
-";
-
-if ($conn->multi_query($sql)) {
-    do {
-        // Store first result set
-        if ($result = $conn->store_result()) {
-            $result->free();
-        }
-        // If there's more result-sets, prepare next one
-    } while ($conn->more_results() && $conn->next_result());
-} else {
-    echo "Error creating tables: " . $conn->error;
-}
-
 // Start session if not already started
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
+}
+
+// Initialize Firebase Services
+try {
+    require_once __DIR__ . '/../vendor/autoload.php';
+
+    // Initialize Firebase Services
+    $factory = (new \Kreait\Firebase\Factory)
+        ->withServiceAccount(__DIR__ . '/../firebase-credentials.json')
+        ->withProjectId('tamaeagle-36639');
+
+    $GLOBALS['auth'] = $factory->createAuth();
+    $GLOBALS['firestore'] = $factory->createFirestore()->database();
+} catch (Exception $e) {
+    die("Firebase initialization error: " . $e->getMessage());
 }
 
 // Helper function to check if user is logged in
@@ -171,3 +101,105 @@ function getDayOfWeek($date)
 {
     return date('l', strtotime($date));
 }
+
+// Helper function to create a Firestore server timestamp field value
+function firestoreServerTimestamp() {
+    return ['@type' => 'firestore.googleapis.com/Timestamp', 'value' => ['seconds' => time(), 'nanos' => 0]];
+}
+
+// Firestore helper functions
+// Get a document by ID from a collection
+function getDocument($collection, $documentId)
+{
+    if (!isset($GLOBALS['firestore'])) return null;
+    
+    $docRef = $GLOBALS['firestore']->collection($collection)->document($documentId);
+    $snapshot = $docRef->snapshot();
+    
+    if ($snapshot->exists()) {
+        $data = $snapshot->data();
+        $data['id'] = $documentId; // Add document ID to the data
+        return $data;
+    }
+    
+    return null;
+}
+
+// Get documents from a collection with optional where clauses
+function getDocuments($collection, $whereConditions = [], $orderBy = null, $orderDirection = 'asc')
+{
+    if (!isset($GLOBALS['firestore'])) return [];
+    
+    $query = $GLOBALS['firestore']->collection($collection);
+    
+    // Apply where conditions
+    foreach ($whereConditions as $condition) {
+        if (count($condition) === 3) {
+            list($field, $operator, $value) = $condition;
+            $query = $query->where($field, $operator, $value);
+        }
+    }
+    
+    // Apply ordering
+    if ($orderBy !== null) {
+        $query = $query->orderBy($orderBy, $orderDirection);
+    }
+    
+    // Execute and return results
+    $documents = [];
+    $snapshot = $query->documents();
+    
+    foreach ($snapshot as $document) {
+        $data = $document->data();
+        $data['id'] = $document->id(); // Add document ID to the data
+        $documents[] = $data;
+    }
+    
+    return $documents;
+}
+
+// Add a new document to a collection
+function addDocument($collection, $data)
+{
+    if (!isset($GLOBALS['firestore'])) return null;
+    
+    // Add timestamp using server timestamp
+    $data['created_at'] = firestoreServerTimestamp();
+    
+    $docRef = $GLOBALS['firestore']->collection($collection)->add($data);
+    return $docRef->id();
+}
+
+// Update an existing document
+function updateDocument($collection, $documentId, $data)
+{
+    if (!isset($GLOBALS['firestore'])) return false;
+    
+    // Add timestamp using server timestamp
+    $data['updated_at'] = firestoreServerTimestamp();
+    
+    $docRef = $GLOBALS['firestore']->collection($collection)->document($documentId);
+    $docRef->update($data);
+    
+    return true;
+}
+
+// Delete a document
+function deleteDocument($collection, $documentId)
+{
+    if (!isset($GLOBALS['firestore'])) return false;
+    
+    $docRef = $GLOBALS['firestore']->collection($collection)->document($documentId);
+    $docRef->delete();
+    
+    return true;
+}
+
+// Transaction management
+function runTransaction($callback)
+{
+    if (!isset($GLOBALS['firestore'])) return null;
+    
+    return $GLOBALS['firestore']->runTransaction($callback);
+}
+?>

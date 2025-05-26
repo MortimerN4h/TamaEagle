@@ -91,22 +91,36 @@ $(document).ready(function () {
                 const taskId = ui.item.data('id');
                 const sectionId = ui.item.closest('.sortable-tasks').data('section-id');
                 const position = ui.item.index();
-                // Send AJAX request to update position
-                $.ajax({
-                    url: '../api/update-task-position.php',
-                    type: 'POST',
-                    data: {
-                        task_id: taskId,
-                        section_id: sectionId,
-                        position: position
-                    },
-                    success: function (response) {
-                        console.log('Position updated successfully');
-                    },
-                    error: function (xhr, status, error) {
-                        console.error('Error updating position:', error);
-                    }
-                });
+                
+                // Check if database helper is initialized
+                if (typeof window.dbHelper !== 'undefined') {
+                    // Use dbHelper regardless of database type
+                    window.dbHelper.updateTaskPosition(taskId, sectionId, position)
+                        .then(() => {
+                            console.log('Task position updated successfully');
+                        })
+                        .catch(error => {
+                            console.error('Error updating task position:', error);
+                        });
+                } else {
+                    console.warn('Database helper not found, using fallback AJAX');
+                    // Fall back to AJAX if helper isn't loaded
+                    $.ajax({
+                        url: '../api/update-task-position.php',
+                        type: 'POST',
+                        data: {
+                            task_id: taskId,
+                            section_id: sectionId,
+                            position: position
+                        },
+                        success: function (response) {
+                            console.log('Position updated successfully');
+                        },
+                        error: function (xhr, status, error) {
+                            console.error('Error updating position:', error);
+                        }
+                    });
+                }
             }
         }).disableSelection();
     }
@@ -124,21 +138,35 @@ $(document).ready(function () {
                 // Get the new positions
                 const sectionId = ui.item.data('section-id');
                 const position = ui.item.index();
-                // Send AJAX request to update position
-                $.ajax({
-                    url: '../api/update-section-position.php',
-                    type: 'POST',
-                    data: {
-                        section_id: sectionId,
-                        position: position
-                    },
-                    success: function (response) {
-                        console.log('Section position updated successfully');
-                    },
-                    error: function (xhr, status, error) {
-                        console.error('Error updating section position:', error);
-                    }
-                });
+                
+                // Check if database helper is initialized
+                if (typeof window.dbHelper !== 'undefined') {
+                    // Use dbHelper regardless of database type
+                    window.dbHelper.updateSectionPosition(sectionId, position)
+                        .then(() => {
+                            console.log('Section position updated successfully');
+                        })
+                        .catch(error => {
+                            console.error('Error updating section position:', error);
+                        });
+                } else {
+                    console.warn('Database helper not found, using fallback AJAX');
+                    // Fall back to AJAX
+                    $.ajax({
+                        url: '../api/update-section-position.php',
+                        type: 'POST',
+                        data: {
+                            section_id: sectionId,
+                            position: position
+                        },
+                        success: function (response) {
+                            console.log('Section position updated successfully');
+                        },
+                        error: function (xhr, status, error) {
+                            console.error('Error updating section position:', error);
+                        }
+                    });
+                }
             }
         }).disableSelection();
     }

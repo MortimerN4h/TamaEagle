@@ -20,25 +20,61 @@ if ($prevWeekStart < $currentDate) {
     $prevWeekStart = $currentDate;
 }
 
-// Get all tasks within the week range
-$tasksQuery = "
-    SELECT t.*, p.name as project_name, p.color as project_color 
-    FROM tasks t
-    LEFT JOIN projects p ON t.project_id = p.id
-    WHERE t.user_id = ? 
-        AND (
-            (t.start_date BETWEEN ? AND ?) OR
-            (t.due_date BETWEEN ? AND ?) OR
-            (t.start_date <= ? AND t.due_date >= ?)
-        )
-        AND t.is_completed = 0
-    ORDER BY t.due_date ASC, t.priority DESC
-";
+// Get all tasks within the week range using Firestore
+// Note: Firestore doesn't support complex date range queries directly, so we'll get all tasks and filter
+$allUserTasksConditions = [
+    ['user_id', '==', $userId],
+    ['is_completed', '==', false]
+];
 
-$stmt = $conn->prepare($tasksQuery);
-$stmt->bind_param("issssss", $userId, $weekStart, $weekEnd, $weekStart, $weekEnd, $weekStart, $weekEnd);
-$stmt->execute();
-$tasksResult = $stmt->get_result();
+$allTasks = getDocuments('tasks', $allUserTasksConditions);
+
+// Filter tasks that fall within the week
+$weekTasks = [];
+foreach ($allTasks as $task) {
+    $startDate = isset($task['start_date']) ? $task['start_date'] : null;
+    $dueDate = isset($task['due_date']) ? $task['due_date'] : null;
+    
+    if (
+        // Task starts within the week range
+        ($startDate && $startDate >= $weekStart && $startDate <= $weekEnd) ||
+        // Task is due within the week range
+        ($dueDate && $dueDate >= $weekStart && $dueDate <= $weekEnd) ||
+        // Task spans across the week
+        ($startDate && $dueDate && $startDate <= $weekStart && $dueDate >= $weekEnd)
+    ) {
+        // Add project data to task
+        if (isset($task['project_id'])) {
+            $project = getDocument('projects', $task['project_id']);
+            if ($project) {
+                $task['project_name'] = $project['name'];
+                $task['project_color'] = $project['color'];
+            } else {
+                $task['project_name'] = null;
+                $task['project_color'] = null;
+            }
+        } else {
+            $task['project_name'] = null;
+            $task['project_color'] = null;
+        }
+        
+        $weekTasks[] = $task;
+    }
+}
+
+// Sort tasks by due date then priority
+usort($weekTasks, function($a, $b) {
+    $aDueDate = $a['due_date'] ?? '9999-12-31';
+    $bDueDate = $b['due_date'] ?? '9999-12-31';
+    
+    if ($aDueDate == $bDueDate) {
+        $aPriority = $a['priority'] ?? 0;
+        $bPriority = $b['priority'] ?? 0;
+        return $bPriority - $aPriority; // Higher priority first
+    }
+    
+    return strcmp($aDueDate, $bDueDate);
+});
 
 // Organize tasks by date
 $tasksByDate = [];
@@ -49,141 +85,131 @@ for ($i = 0; $i < 7; $i++) {
     $tasksByDate[$date] = [
         'date' => $date,
         'day' => date('l', strtotime($date)),
-        'formatted' => date('M j', strtotime($date)),
+        'day_short' => date('D', strtotime($date)),
+        'day_number' => date('j', strtotime($date)),
+        'is_today' => $date == $currentDate,
+        'is_tomorrow' => $date == date('Y-m-d', strtotime('+1 day', strtotime($currentDate))),
         'tasks' => []
     ];
 }
 
-// Group tasks by due date
-while ($task = $tasksResult->fetch_assoc()) {
-    $taskDate = $task['due_date'] ?: $task['start_date'];
-
-    // Only add tasks to dates within our range
-    if (isset($tasksByDate[$taskDate])) {
-        $tasksByDate[$taskDate]['tasks'][] = $task;
+// Add tasks to their respective days
+foreach ($weekTasks as $task) {
+    $dueDate = $task['due_date'] ?? null;
+    
+    // If the task has a due date and it falls within our week
+    if ($dueDate && array_key_exists($dueDate, $tasksByDate)) {
+        $tasksByDate[$dueDate]['tasks'][] = $task;
     }
 }
 
 // Page title
 $pageTitle = 'Upcoming';
+$weekDateRange = date('M j', strtotime($weekStart)) . ' - ' . date('M j', strtotime($weekEnd));
 
 // Include header
 include '../includes/header.php';
 ?>
 
 <div class="container-fluid py-4">
-    <div class="date-navigation mb-4">
-        <h1 class="date-nav-title"><?php echo $pageTitle; ?></h1>
-        <div class="date-nav-actions">
-            <?php if ($weekStart != $currentDate): ?>
-                <a href="upcoming.php" class="btn btn-sm btn-outline-secondary date-nav-today">
-                    Today
-                </a>
-            <?php endif; ?>
-            <?php if ($prevWeekStart != $weekStart): ?>
-                <a href="upcoming.php?week=<?php echo $prevWeekStart; ?>" class="btn btn-sm btn-outline-secondary date-nav-prev" data-current="<?php echo $prevWeekStart; ?>">
-                    <i class="fas fa-chevron-left"></i> Previous
-                </a>
-            <?php endif; ?>
-            <a href="upcoming.php?week=<?php echo $nextWeekStart; ?>" class="btn btn-sm btn-outline-secondary date-nav-next" data-next="<?php echo $nextWeekStart; ?>">
-                Next <i class="fas fa-chevron-right"></i>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="page-title"><?php echo $pageTitle; ?></h1>
+        
+        <div class="btn-group">
+            <a href="?week=<?php echo $prevWeekStart; ?>" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-chevron-left"></i>
             </a>
-            <button class="btn btn-primary btn-sm ms-2" data-bs-toggle="modal" data-bs-target="#taskModal">
-                <i class="fas fa-plus"></i> Add Task
-            </button>
+            <span class="btn btn-sm btn-outline-secondary disabled">
+                <?php echo $weekDateRange; ?>
+            </span>
+            <a href="?week=<?php echo $nextWeekStart; ?>" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-chevron-right"></i>
+            </a>
         </div>
     </div>
 
-    <?php foreach ($tasksByDate as $date => $dayData): ?>
-        <div class="section-container mb-4">
-            <div class="section-header">
-                <h4 class="section-title">
-                    <?php if (isToday($date)): ?>
-                        <span class="text-success"><?php echo $dayData['day']; ?> (Today)</span>
-                    <?php elseif (isTomorrow($date)): ?>
-                        <span><?php echo $dayData['day']; ?> (Tomorrow)</span>
-                    <?php else: ?>
-                        <span><?php echo $dayData['day']; ?></span>
-                    <?php endif; ?>
-                    <span class="ms-2 text-muted"><?php echo $dayData['formatted']; ?></span>
-                </h4>
-            </div>
-
-            <?php if (count($dayData['tasks']) > 0): ?>
-                <ul class="task-list sortable-tasks" data-section-id="<?php echo $date; ?>">
-                    <?php foreach ($dayData['tasks'] as $task): ?>
-                        <?php $priorityClass = 'priority-' . $task['priority']; ?>
-                        <li class="task-item <?php echo $priorityClass; ?>" data-id="<?php echo $task['id']; ?>">
-                            <div class="task-header">
-                                <div class="task-checkbox">
-                                    <a href="complete-task.php?id=<?php echo $task['id']; ?>" class="complete-task" data-id="<?php echo $task['id']; ?>">
-                                        <i class="far fa-circle"></i>
-                                    </a>
-                                </div>
-                                <h5 class="task-name"><?php echo htmlspecialchars($task['name']); ?></h5>
-                            </div>
-
-                            <?php if (!empty($task['description'])): ?>
-                                <div class="task-description">
-                                    <?php echo nl2br(htmlspecialchars($task['description'])); ?>
-                                </div>
-                            <?php endif; ?>
-
-                            <div class="task-footer">
-                                <?php if (!empty($task['project_name'])): ?>
-                                    <span class="task-project" style="background-color: <?php echo $task['project_color']; ?>20;">
-                                        <i class="fa fa-project-diagram" style="color: <?php echo $task['project_color']; ?>"></i>
-                                        <?php echo htmlspecialchars($task['project_name']); ?>
-                                    </span>
-                                <?php endif; ?>
-
-                                <div class="task-actions">
-                                    <button class="edit-task" data-id="<?php echo $task['id']; ?>"
-                                        data-name="<?php echo htmlspecialchars($task['name']); ?>"
-                                        data-description="<?php echo htmlspecialchars($task['description']); ?>"
-                                        data-start-date="<?php echo $task['start_date']; ?>"
-                                        data-due-date="<?php echo $task['due_date']; ?>"
-                                        data-priority="<?php echo $task['priority']; ?>"
-                                        data-project-id="<?php echo $task['project_id']; ?>">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <a href="delete-task.php?id=<?php echo $task['id']; ?>" class="delete-task" onclick="return confirm('Are you sure you want to delete this task?');">
-                                        <i class="fas fa-trash"></i>
-                                    </a>
-                                    <span class="drag-handle" data-bs-toggle="tooltip" title="Drag to reorder">
-                                        <i class="fas fa-grip-lines"></i>
-                                    </span>
-                                </div>
-                            </div>
-                        </li>
-                    <?php endforeach; ?>
-                </ul>
-            <?php else: ?>
-                <div class="alert alert-light">
-                    <p class="mb-0">No tasks scheduled for this day.</p>
+    <div class="row upcoming-week">
+        <?php foreach ($tasksByDate as $date => $dayData): ?>
+            <div class="col upcoming-day <?php echo $dayData['is_today'] ? 'today' : ''; ?>">
+                <div class="day-header">
+                    <div class="day-name <?php echo $dayData['is_today'] ? 'text-primary' : ''; ?>">
+                        <?php echo $dayData['day_short']; ?>
+                    </div>
+                    <div class="day-number <?php echo $dayData['is_today'] ? 'bg-primary text-white' : ''; ?>">
+                        <?php echo $dayData['day_number']; ?>
+                    </div>
                 </div>
-            <?php endif; ?>
-
-            <div class="mt-2">
-                <button class="btn btn-sm btn-outline-secondary" data-date="<?php echo $date; ?>" onclick="addTaskForDay('<?php echo $date; ?>')">
-                    <i class="fas fa-plus"></i> Add task
-                </button>
+                
+                <div class="day-tasks">
+                    <?php if (count($dayData['tasks']) > 0): ?>
+                        <ul class="task-list">
+                            <?php foreach ($dayData['tasks'] as $task): ?>
+                                <?php
+                                $priorityClass = 'priority-' . $task['priority'];
+                                $projectStyle = !empty($task['project_color']) ? 'style="background-color: ' . $task['project_color'] . ';"' : '';
+                                ?>
+                                <li class="task-item <?php echo $priorityClass; ?>" data-id="<?php echo $task['id']; ?>">
+                                    <div class="task-content">
+                                        <div class="task-details">
+                                            <div class="task-title">
+                                                <?php echo htmlspecialchars($task['name']); ?>
+                                            </div>
+                                            <?php if (!empty($task['description'])): ?>
+                                                <div class="task-description">
+                                                    <?php echo nl2br(htmlspecialchars($task['description'])); ?>
+                                                </div>
+                                            <?php endif; ?>
+                                        </div>
+                                        
+                                        <div class="task-meta">
+                                            <?php if (!empty($task['project_name'])): ?>
+                                                <span class="task-project" style="background-color: <?php echo $task['project_color']; ?>20;">
+                                                    <i class="fa fa-project-diagram" style="color: <?php echo $task['project_color']; ?>"></i>
+                                                    <?php echo htmlspecialchars($task['project_name']); ?>
+                                                </span>
+                                            <?php endif; ?>
+                                            
+                                            <div class="task-actions">
+                                                <button class="edit-task" data-id="<?php echo $task['id']; ?>"
+                                                    data-name="<?php echo htmlspecialchars($task['name']); ?>"
+                                                    data-description="<?php echo htmlspecialchars($task['description']); ?>"
+                                                    data-start-date="<?php echo $task['start_date']; ?>"
+                                                    data-due-date="<?php echo $task['due_date']; ?>"
+                                                    data-priority="<?php echo $task['priority']; ?>"
+                                                    data-project-id="<?php echo $task['project_id']; ?>">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <a href="delete-task.php?id=<?php echo $task['id']; ?>" class="delete-task" onclick="return confirm('Are you sure you want to delete this task?');">
+                                                    <i class="fas fa-trash"></i>
+                                                </a>
+                                                <span class="drag-handle" data-bs-toggle="tooltip" title="Drag to reorder">
+                                                    <i class="fas fa-grip-lines"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                    <?php else: ?>
+                        <div class="empty-day">
+                            <small>No tasks</small>
+                        </div>
+                    <?php endif; ?>
+                </div>
             </div>
-        </div>
-    <?php endforeach; ?>
-
+        <?php endforeach; ?>
+    </div>
+    
+    <div class="add-task-btn">
+        <button type="button" class="btn btn-primary btn-circle btn-floating" data-bs-toggle="modal" data-bs-target="#taskModal">
+            <i class="bi bi-plus"></i>
+        </button>
+    </div>
 </div>
 
-<script>
-    function addTaskForDay(date) {
-        // Set the date in the task modal and open it
-        document.getElementById('startDate').value = date;
-        document.getElementById('dueDate').value = date;
+<!-- Include task modal -->
+<?php include '../includes/task-modal.php'; ?>
 
-        // Open the modal
-        const taskModal = new bootstrap.Modal(document.getElementById('taskModal'));
-        taskModal.show();
-    }
-</script>
-
+<!-- Include footer -->
 <?php include '../includes/footer.php'; ?>

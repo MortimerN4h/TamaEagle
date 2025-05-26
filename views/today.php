@@ -5,39 +5,59 @@ requireLogin();
 $userId = getCurrentUserId();
 $currentDate = getCurrentDate();
 
-// Get overdue tasks
-$overdueQuery = "
-    SELECT t.*, p.name as project_name, p.color as project_color 
-    FROM tasks t
-    LEFT JOIN projects p ON t.project_id = p.id
-    WHERE t.user_id = ? 
-        AND t.due_date < ?
-        AND t.is_completed = 0
-    ORDER BY t.due_date ASC
-";
+// Get overdue tasks using Firestore
+$overdueWhereConditions = [
+    ['user_id', '==', $userId],
+    ['due_date', '<', $currentDate],
+    ['is_completed', '==', false]
+];
 
-$overdueStmt = $conn->prepare($overdueQuery);
-$overdueStmt->bind_param("is", $userId, $currentDate);
-$overdueStmt->execute();
-$overdueResult = $overdueStmt->get_result();
-$overdueCount = $overdueResult->num_rows;
+$overdueTasks = getDocuments('tasks', $overdueWhereConditions, 'due_date', 'asc');
+$overdueCount = count($overdueTasks);
 
-// Get today's tasks
-$todayQuery = "
-    SELECT t.*, p.name as project_name, p.color as project_color 
-    FROM tasks t
-    LEFT JOIN projects p ON t.project_id = p.id
-    WHERE t.user_id = ? 
-        AND (t.start_date <= ? AND t.due_date >= ?)
-        AND t.is_completed = 0
-    ORDER BY t.priority DESC, t.due_date ASC
-";
+// Get today's tasks using Firestore
+$todayWhereConditions = [
+    ['user_id', '==', $userId],
+    ['start_date', '<=', $currentDate],
+    ['due_date', '>=', $currentDate],
+    ['is_completed', '==', false]
+];
 
-$todayStmt = $conn->prepare($todayQuery);
-$todayStmt->bind_param("iss", $userId, $currentDate, $currentDate);
-$todayStmt->execute();
-$todayResult = $todayStmt->get_result();
-$todayCount = $todayResult->num_rows;
+$todayTasks = getDocuments('tasks', $todayWhereConditions, 'priority', 'desc');
+$todayCount = count($todayTasks);
+
+// Process tasks with project data
+foreach ($overdueTasks as &$task) {
+    if (isset($task['project_id'])) {
+        $project = getDocument('projects', $task['project_id']);
+        if ($project) {
+            $task['project_name'] = $project['name'];
+            $task['project_color'] = $project['color'];
+        } else {
+            $task['project_name'] = null;
+            $task['project_color'] = null;
+        }
+    } else {
+        $task['project_name'] = null;
+        $task['project_color'] = null;
+    }
+}
+
+foreach ($todayTasks as &$task) {
+    if (isset($task['project_id'])) {
+        $project = getDocument('projects', $task['project_id']);
+        if ($project) {
+            $task['project_name'] = $project['name'];
+            $task['project_color'] = $project['color'];
+        } else {
+            $task['project_name'] = null;
+            $task['project_color'] = null;
+        }
+    } else {
+        $task['project_name'] = null;
+        $task['project_color'] = null;
+    }
+}
 
 // Page title
 $pageTitle = 'Today';
@@ -50,25 +70,27 @@ include '../includes/header.php';
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="page-title">
             <?php echo $pageTitle; ?>
-            <span class="text-muted fs-6 ms-2"><?php echo date('F j, Y'); ?></span>
+            <span class="ms-2 badge bg-light text-dark">
+                <?php echo date('l, F j'); ?>
+            </span>
         </h1>
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#taskModal">
-            <i class="fas fa-plus"></i> Add Task
-        </button>
     </div>
 
+    <!-- Overdue Tasks Section -->
     <?php if ($overdueCount > 0): ?>
-        <div class="section-container mb-4">
-            <div class="section-header">
-                <h4 class="section-title text-danger">
-                    <i class="fas fa-exclamation-circle"></i> Overdue
-                    <span class="badge bg-danger ms-2"><?php echo $overdueCount; ?></span>
-                </h4>
+        <div class="task-section mb-5">
+            <div class="section-header mb-3">
+                <h2 class="section-title text-danger">
+                    Overdue <span class="badge bg-danger"><?php echo $overdueCount; ?></span>
+                </h2>
             </div>
-            <ul class="task-list sortable-tasks" data-section-id="overdue">
-                <?php while ($task = $overdueResult->fetch_assoc()): ?>
-                    <?php $priorityClass = 'priority-' . $task['priority']; ?>
-                    <li class="task-item <?php echo $priorityClass; ?>" data-id="<?php echo $task['id']; ?>">
+            <ul class="task-list">
+                <?php foreach ($overdueTasks as $task): ?>
+                    <?php
+                    $priorityClass = 'priority-' . $task['priority'];
+                    $projectStyle = !empty($task['project_color']) ? 'style="background-color: ' . $task['project_color'] . ';"' : '';
+                    ?>
+                    <li class="task-item <?php echo $priorityClass; ?> overdue" data-id="<?php echo $task['id']; ?>">
                         <div class="task-header">
                             <div class="task-checkbox">
                                 <a href="complete-task.php?id=<?php echo $task['id']; ?>" class="complete-task" data-id="<?php echo $task['id']; ?>">
@@ -115,25 +137,26 @@ include '../includes/header.php';
                             </div>
                         </div>
                     </li>
-                <?php endwhile; ?>
+                <?php endforeach; ?>
             </ul>
         </div>
     <?php endif; ?>
 
-    <div class="section-container">
-        <div class="section-header">
-            <h4 class="section-title">
-                <i class="fas fa-calendar-day"></i> Today
-                <?php if ($todayCount > 0): ?>
-                    <span class="badge bg-primary ms-2"><?php echo $todayCount; ?></span>
-                <?php endif; ?>
-            </h4>
+    <!-- Today's Tasks Section -->
+    <div class="task-section">
+        <div class="section-header mb-3">
+            <h2 class="section-title">
+                Today <span class="badge bg-primary"><?php echo $todayCount; ?></span>
+            </h2>
         </div>
-
+        
         <?php if ($todayCount > 0): ?>
-            <ul class="task-list sortable-tasks" data-section-id="today">
-                <?php while ($task = $todayResult->fetch_assoc()): ?>
-                    <?php $priorityClass = 'priority-' . $task['priority']; ?>
+            <ul class="task-list">
+                <?php foreach ($todayTasks as $task): ?>
+                    <?php
+                    $priorityClass = 'priority-' . $task['priority'];
+                    $projectStyle = !empty($task['project_color']) ? 'style="background-color: ' . $task['project_color'] . ';"' : '';
+                    ?>
                     <li class="task-item <?php echo $priorityClass; ?>" data-id="<?php echo $task['id']; ?>">
                         <div class="task-header">
                             <div class="task-checkbox">
@@ -182,14 +205,28 @@ include '../includes/header.php';
                             </div>
                         </div>
                     </li>
-                <?php endwhile; ?>
+                <?php endforeach; ?>
             </ul>
         <?php else: ?>
-            <div class="alert alert-info">
-                <p class="mb-0">No tasks scheduled for today. Click "Add Task" to create a new task.</p>
+            <div class="empty-state">
+                <div class="empty-state-icon">
+                    <i class="bi bi-calendar-check"></i>
+                </div>
+                <h3>No tasks for today</h3>
+                <p>Enjoy your day off or add some tasks</p>
             </div>
         <?php endif; ?>
     </div>
+    
+    <div class="add-task-btn">
+        <button type="button" class="btn btn-primary btn-circle btn-floating" data-bs-toggle="modal" data-bs-target="#taskModal">
+            <i class="bi bi-plus"></i>
+        </button>
+    </div>
 </div>
 
+<!-- Include task modal -->
+<?php include '../includes/task-modal.php'; ?>
+
+<!-- Include footer -->
 <?php include '../includes/footer.php'; ?>

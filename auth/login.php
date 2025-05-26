@@ -11,34 +11,56 @@ $error = '';
 
 // Process login form
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $username = getPostData('username');
+    $email = getPostData('username'); // This can be email or username
     $password = getPostData('password');
 
-    if (empty($username) || empty($password)) {
+    if (empty($email) || empty($password)) {
         $error = 'Please fill in all required fields';
     } else {
-        // Query to find user
-        $query = "SELECT id, username, password FROM users WHERE username = ? OR email = ? LIMIT 1";
-        $stmt = $conn->prepare($query);
-        $stmt->bind_param("ss", $username, $username); // Username can be email too
-        $stmt->execute();
-        $result = $stmt->get_result();
-
-        if ($result->num_rows === 1) {
-            $user = $result->fetch_assoc();
-
-            // Verify password
-            if (password_verify($password, $user['password'])) {
-                // Password is correct, create session
-                $_SESSION['user_id'] = $user['id'];
-                $_SESSION['username'] = $user['username'];
-
-                // Redirect to dashboard                header("Location: ../index.php");
-                exit;
+        try {
+            // Check if input is a valid email
+            if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                // If it's an email, sign in directly
+                $signInResult = $auth->signInWithEmailAndPassword($email, $password);
             } else {
-                $error = 'Invalid username or password';
+                // If it's a username, find the user by username in Firestore
+                $usersQuery = $firestore->collection('users')
+                    ->where('username', '==', $email)
+                    ->limit(1)
+                    ->documents();
+                
+                $user = null;
+                foreach ($usersQuery as $userDoc) {
+                    $user = $userDoc->data();
+                    $user['id'] = $userDoc->id();
+                    break;
+                }
+                
+                if ($user && isset($user['email'])) {
+                    // Now sign in with the retrieved email
+                    $signInResult = $auth->signInWithEmailAndPassword($user['email'], $password);
+                } else {
+                    throw new Exception('User not found');
+                }
             }
-        } else {
+            
+            // Get the user ID from Firebase
+            $firebaseUserId = $signInResult->firebaseUserId();
+            
+            // Get additional user data from Firestore
+            $userDoc = $firestore->collection('users')->document($firebaseUserId)->snapshot();
+            $userData = $userDoc->exists() ? $userDoc->data() : [];
+            
+            // Create session
+            $_SESSION['user_id'] = $firebaseUserId;
+            $_SESSION['username'] = $userData['username'] ?? '';
+            $_SESSION['email'] = $userData['email'] ?? '';
+            
+            // Redirect to dashboard
+            header("Location: ../index.php");
+            exit;
+            
+        } catch (Exception $e) {
             $error = 'Invalid username or password';
         }
     }

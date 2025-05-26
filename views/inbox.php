@@ -21,21 +21,23 @@ if (!in_array($order, $validOrderOptions)) {
 }
 
 // Get inbox tasks (tasks with no project assigned)
-$tasksQuery = "
-    SELECT t.*, p.name as project_name, p.color as project_color 
-    FROM tasks t
-    LEFT JOIN projects p ON t.project_id = p.id
-    WHERE t.user_id = ? AND t.project_id IS NULL AND t.is_completed = 0
-    ORDER BY t.$sort $order
-";
+$whereConditions = [
+    ['user_id', '==', $userId],
+    ['project_id', '==', null],
+    ['is_completed', '==', false]
+];
 
-$stmt = $conn->prepare($tasksQuery);
-$stmt->bind_param("i", $userId);
-$stmt->execute();
-$tasksResult = $stmt->get_result();
+// Get tasks from Firestore
+$tasks = getDocuments('tasks', $whereConditions, $sort, $order);
+
+// Process tasks with project data
+foreach ($tasks as &$task) {
+    $task['project_name'] = null;
+    $task['project_color'] = null;
+}
 
 // Get tasks count
-$taskCount = $tasksResult->num_rows;
+$taskCount = count($tasks);
 
 // Page title
 $pageTitle = 'Inbox';
@@ -62,10 +64,9 @@ include '../includes/header.php';
             </ul>
         </div>
     </div>
-
     <?php if ($taskCount > 0): ?>
         <ul class="task-list sortable-tasks" data-section-id="inbox">
-            <?php while ($task = $tasksResult->fetch_assoc()): ?>
+            <?php foreach ($tasks as $task): ?>
                 <?php
                 $isPastDue = !empty($task['due_date']) && isPast($task['due_date']) && !isToday($task['due_date']);
                 $priorityClass = 'priority-' . $task['priority'];
@@ -114,17 +115,27 @@ include '../includes/header.php';
                         </div>
                     </div>
                 </li>
-            <?php endwhile; ?>
+            <?php endforeach; ?>
         </ul>
     <?php else: ?>
-        <div class="alert alert-info">
-            No tasks found in your inbox. Click "Add Task" to create a new task.
+        <div class="empty-state">
+            <div class="empty-state-icon">
+                <i class="bi bi-check2-all"></i>
+            </div>
+            <h3>No tasks yet</h3>
+            <p>Add some tasks to get started</p>
         </div>
     <?php endif; ?>
-
-    <button class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#taskModal">
-        <i class="fas fa-plus"></i> Add Task
-    </button>
+    
+    <div class="add-task-btn">
+        <button type="button" class="btn btn-primary btn-circle btn-floating" data-bs-toggle="modal" data-bs-target="#taskModal">
+            <i class="bi bi-plus"></i>
+        </button>
+    </div>
 </div>
 
+<!-- Include task modal -->
+<?php include '../includes/task-modal.php'; ?>
+
+<!-- Include footer -->
 <?php include '../includes/footer.php'; ?>

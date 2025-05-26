@@ -5,95 +5,178 @@ requireLogin();
 $userId = getCurrentUserId();
 $projectId = getGetData('id');
 
-// Verify project exists and belongs to user
-$projectQuery = "SELECT * FROM projects WHERE id = ? AND user_id = ?";
-$projectStmt = $conn->prepare($projectQuery);
-$projectStmt->bind_param("ii", $projectId, $userId);
-$projectStmt->execute();
-$projectResult = $projectStmt->get_result();
-
-if ($projectResult->num_rows === 0) {
-    // Project not found or doesn't belong to user
-    header("Location: ../index.php");
-    exit;
-}
-
-$project = $projectResult->fetch_assoc();
-
-// Get all sections for this project
-$sectionsQuery = "SELECT * FROM sections WHERE project_id = ? ORDER BY position ASC";
-$sectionsStmt = $conn->prepare($sectionsQuery);
-$sectionsStmt->bind_param("i", $projectId);
-$sectionsStmt->execute();
-$sectionsResult = $sectionsStmt->get_result();
-
+$project = null;
 $sections = [];
-while ($section = $sectionsResult->fetch_assoc()) {
-    $sections[] = $section;
-}
-
-// If no sections exist, create a default section
-if (count($sections) === 0) {
-    $defaultSectionName = "To Do";
-    $defaultSectionQuery = "INSERT INTO sections (project_id, name, position) VALUES (?, ?, 0)";
-    $defaultSectionStmt = $conn->prepare($defaultSectionQuery);
-    $defaultSectionStmt->bind_param("is", $projectId, $defaultSectionName);
-    $defaultSectionStmt->execute();
-
-    $defaultSectionId = $defaultSectionStmt->insert_id;
-    $sections[] = [
-        'id' => $defaultSectionId,
-        'project_id' => $projectId,
-        'name' => $defaultSectionName,
-        'position' => 0
-    ];
-}
-
-// Get all tasks for this project
-$tasksQuery = "
-    SELECT * FROM tasks 
-    WHERE project_id = ? AND user_id = ? AND is_completed = 0
-    ORDER BY position ASC
-";
-$tasksStmt = $conn->prepare($tasksQuery);
-$tasksStmt->bind_param("ii", $projectId, $userId);
-$tasksStmt->execute();
-$tasksResult = $tasksStmt->get_result();
-
-// Group tasks by section
 $tasksBySection = [];
-foreach ($sections as $section) {
-    $tasksBySection[$section['id']] = [];
-}
+$totalTasks = 0;
+$completedTasks = 0;
+$completionPercentage = 0;
 
-// Add tasks to their sections
-while ($task = $tasksResult->fetch_assoc()) {
-    $sectionId = $task['section_id'] ?: $sections[0]['id']; // Default to first section if no section
-    if (isset($tasksBySection[$sectionId])) {
-        $tasksBySection[$sectionId][] = $task;
-    } else {
-        // If section doesn't exist (shouldn't happen), put task in first section
-        $tasksBySection[$sections[0]['id']][] = $task;
+if ($GLOBALS['useFirebase']) {
+    // Verify project exists and belongs to user
+    $project = getDocument('projects', $projectId);
+
+    if (!$project || $project['user_id'] !== $userId) {
+        // Project not found or doesn't belong to user
+        header("Location: ../index.php");
+        exit;
     }
+
+    // Get all sections for this project
+    $whereConditions = [
+        ['project_id', '==', $projectId]
+    ];
+    $sections = getDocuments('sections', $whereConditions, 'position', 'asc');
+
+    // If no sections exist, create a default section
+    if (count($sections) === 0) {
+        $defaultSectionData = [
+            'project_id' => $projectId,
+            'name' => 'To Do',
+            'position' => 0
+        ];
+        
+        $defaultSectionId = addDocument('sections', $defaultSectionData);
+        $sections[] = [
+            'id' => $defaultSectionId,
+            'project_id' => $projectId,
+            'name' => 'To Do',
+            'position' => 0
+        ];
+    }
+
+    // Initialize tasksBySection with empty arrays for each section
+    foreach ($sections as $section) {
+        $tasksBySection[$section['id']] = [];
+    }
+
+    // Get all tasks for this project
+    $taskWhereConditions = [
+        ['project_id', '==', $projectId],
+        ['user_id', '==', $userId],
+        ['is_completed', '==', false]
+    ];
+    $tasks = getDocuments('tasks', $taskWhereConditions, 'position', 'asc');
+
+    // Add tasks to their sections
+    foreach ($tasks as $task) {
+        $sectionId = $task['section_id'] ?: $sections[0]['id']; // Default to first section if no section
+        if (isset($tasksBySection[$sectionId])) {
+            $tasksBySection[$sectionId][] = $task;
+        } else {
+            // If section doesn't exist (shouldn't happen), put task in first section
+            $tasksBySection[$sections[0]['id']][] = $task;
+        }
+    }
+
+    // Get task counts
+    $allTasksWhereConditions = [
+        ['project_id', '==', $projectId],
+        ['user_id', '==', $userId]
+    ];
+    $allTasks = getDocuments('tasks', $allTasksWhereConditions);
+    
+    $totalTasks = count($allTasks);
+    $completedTasks = 0;
+    
+    foreach ($allTasks as $task) {
+        if (isset($task['is_completed']) && $task['is_completed'] === true) {
+            $completedTasks++;
+        }
+    }
+    
+    $completionPercentage = $totalTasks > 0 ? round(($completedTasks / $totalTasks) * 100) : 0;
+} else {
+    global $conn;
+    
+    // Verify project exists and belongs to user
+    $projectQuery = "SELECT * FROM projects WHERE id = ? AND user_id = ?";
+    $projectStmt = $conn->prepare($projectQuery);
+    $projectStmt->bind_param("ii", $projectId, $userId);
+    $projectStmt->execute();
+    $projectResult = $projectStmt->get_result();
+    
+    if ($projectResult->num_rows === 0) {
+        // Project not found or doesn't belong to user
+        header("Location: ../index.php");
+        exit;
+    }
+    
+    $project = $projectResult->fetch_assoc();
+    
+    // Get all sections for this project
+    $sectionsQuery = "SELECT * FROM sections WHERE project_id = ? ORDER BY position ASC";
+    $sectionsStmt = $conn->prepare($sectionsQuery);
+    $sectionsStmt->bind_param("i", $projectId);
+    $sectionsStmt->execute();
+    $sectionsResult = $sectionsStmt->get_result();
+    
+    while ($section = $sectionsResult->fetch_assoc()) {
+        $sections[] = $section;
+    }
+    
+    // If no sections exist, create a default section
+    if (count($sections) === 0) {
+        $defaultSectionName = "To Do";
+        $defaultSectionQuery = "INSERT INTO sections (project_id, name, position) VALUES (?, ?, 0)";
+        $defaultSectionStmt = $conn->prepare($defaultSectionQuery);
+        $defaultSectionStmt->bind_param("is", $projectId, $defaultSectionName);
+        $defaultSectionStmt->execute();
+        
+        $defaultSectionId = $conn->insert_id;
+        $sections[] = [
+            'id' => $defaultSectionId,
+            'project_id' => $projectId,
+            'name' => 'To Do',
+            'position' => 0
+        ];
+    }
+    
+    // Initialize tasksBySection with empty arrays for each section
+    foreach ($sections as $section) {
+        $tasksBySection[$section['id']] = [];
+    }
+    
+    // Get all tasks for this project
+    $tasksQuery = "
+        SELECT * FROM tasks 
+        WHERE project_id = ? AND user_id = ? AND is_completed = 0
+        ORDER BY position ASC
+    ";
+    $tasksStmt = $conn->prepare($tasksQuery);
+    $tasksStmt->bind_param("ii", $projectId, $userId);
+    $tasksStmt->execute();
+    $tasksResult = $tasksStmt->get_result();
+    
+    // Add tasks to their sections
+    while ($task = $tasksResult->fetch_assoc()) {
+        $sectionId = $task['section_id'] ?: $sections[0]['id']; // Default to first section if no section
+        if (isset($tasksBySection[$sectionId])) {
+            $tasksBySection[$sectionId][] = $task;
+        } else {
+            // If section doesn't exist (shouldn't happen), put task in first section
+            $tasksBySection[$sections[0]['id']][] = $task;
+        }
+    }
+    
+    // Get task counts
+    $taskCountQuery = "
+        SELECT 
+            COUNT(*) as total_tasks,
+            SUM(CASE WHEN is_completed = 1 THEN 1 ELSE 0 END) as completed_tasks
+        FROM tasks 
+        WHERE project_id = ? AND user_id = ?
+    ";
+    $taskCountStmt = $conn->prepare($taskCountQuery);
+    $taskCountStmt->bind_param("ii", $projectId, $userId);
+    $taskCountStmt->execute();
+    $taskCountResult = $taskCountStmt->get_result();
+    $taskCount = $taskCountResult->fetch_assoc();
+    
+    $totalTasks = $taskCount['total_tasks'];
+    $completedTasks = $taskCount['completed_tasks'];
+    $completionPercentage = $totalTasks > 0 ? round(($completedTasks / $totalTasks) * 100) : 0;
 }
-
-// Get task counts
-$taskCountQuery = "
-    SELECT 
-        COUNT(*) as total_tasks,
-        SUM(CASE WHEN is_completed = 1 THEN 1 ELSE 0 END) as completed_tasks
-    FROM tasks 
-    WHERE project_id = ? AND user_id = ?
-";
-$taskCountStmt = $conn->prepare($taskCountQuery);
-$taskCountStmt->bind_param("ii", $projectId, $userId);
-$taskCountStmt->execute();
-$taskCountResult = $taskCountStmt->get_result();
-$taskCount = $taskCountResult->fetch_assoc();
-
-$totalTasks = $taskCount['total_tasks'];
-$completedTasks = $taskCount['completed_tasks'];
-$completionPercentage = $totalTasks > 0 ? round(($completedTasks / $totalTasks) * 100) : 0;
 
 // Page title
 $pageTitle = htmlspecialchars($project['name']);
