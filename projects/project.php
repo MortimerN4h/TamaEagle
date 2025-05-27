@@ -12,171 +12,79 @@ $totalTasks = 0;
 $completedTasks = 0;
 $completionPercentage = 0;
 
-if ($GLOBALS['useFirebase']) {
-    // Verify project exists and belongs to user
-    $project = getDocument('projects', $projectId);
+// Verify project exists and belongs to user
+$project = getDocument('projects', $projectId);
 
-    if (!$project || $project['user_id'] !== $userId) {
-        // Project not found or doesn't belong to user
-        header("Location: ../index.php");
-        exit;
-    }
-
-    // Get all sections for this project
-    $whereConditions = [
-        ['project_id', '==', $projectId]
-    ];
-    $sections = getDocuments('sections', $whereConditions, 'position', 'asc');
-
-    // If no sections exist, create a default section
-    if (count($sections) === 0) {
-        $defaultSectionData = [
-            'project_id' => $projectId,
-            'name' => 'To Do',
-            'position' => 0
-        ];
-        
-        $defaultSectionId = addDocument('sections', $defaultSectionData);
-        $sections[] = [
-            'id' => $defaultSectionId,
-            'project_id' => $projectId,
-            'name' => 'To Do',
-            'position' => 0
-        ];
-    }
-
-    // Initialize tasksBySection with empty arrays for each section
-    foreach ($sections as $section) {
-        $tasksBySection[$section['id']] = [];
-    }
-
-    // Get all tasks for this project
-    $taskWhereConditions = [
-        ['project_id', '==', $projectId],
-        ['user_id', '==', $userId],
-        ['is_completed', '==', false]
-    ];
-    $tasks = getDocuments('tasks', $taskWhereConditions, 'position', 'asc');
-
-    // Add tasks to their sections
-    foreach ($tasks as $task) {
-        $sectionId = $task['section_id'] ?: $sections[0]['id']; // Default to first section if no section
-        if (isset($tasksBySection[$sectionId])) {
-            $tasksBySection[$sectionId][] = $task;
-        } else {
-            // If section doesn't exist (shouldn't happen), put task in first section
-            $tasksBySection[$sections[0]['id']][] = $task;
-        }
-    }
-
-    // Get task counts
-    $allTasksWhereConditions = [
-        ['project_id', '==', $projectId],
-        ['user_id', '==', $userId]
-    ];
-    $allTasks = getDocuments('tasks', $allTasksWhereConditions);
-    
-    $totalTasks = count($allTasks);
-    $completedTasks = 0;
-    
-    foreach ($allTasks as $task) {
-        if (isset($task['is_completed']) && $task['is_completed'] === true) {
-            $completedTasks++;
-        }
-    }
-    
-    $completionPercentage = $totalTasks > 0 ? round(($completedTasks / $totalTasks) * 100) : 0;
-} else {
-    global $conn;
-    
-    // Verify project exists and belongs to user
-    $projectQuery = "SELECT * FROM projects WHERE id = ? AND user_id = ?";
-    $projectStmt = $conn->prepare($projectQuery);
-    $projectStmt->bind_param("ii", $projectId, $userId);
-    $projectStmt->execute();
-    $projectResult = $projectStmt->get_result();
-    
-    if ($projectResult->num_rows === 0) {
-        // Project not found or doesn't belong to user
-        header("Location: ../index.php");
-        exit;
-    }
-    
-    $project = $projectResult->fetch_assoc();
-    
-    // Get all sections for this project
-    $sectionsQuery = "SELECT * FROM sections WHERE project_id = ? ORDER BY position ASC";
-    $sectionsStmt = $conn->prepare($sectionsQuery);
-    $sectionsStmt->bind_param("i", $projectId);
-    $sectionsStmt->execute();
-    $sectionsResult = $sectionsStmt->get_result();
-    
-    while ($section = $sectionsResult->fetch_assoc()) {
-        $sections[] = $section;
-    }
-    
-    // If no sections exist, create a default section
-    if (count($sections) === 0) {
-        $defaultSectionName = "To Do";
-        $defaultSectionQuery = "INSERT INTO sections (project_id, name, position) VALUES (?, ?, 0)";
-        $defaultSectionStmt = $conn->prepare($defaultSectionQuery);
-        $defaultSectionStmt->bind_param("is", $projectId, $defaultSectionName);
-        $defaultSectionStmt->execute();
-        
-        $defaultSectionId = $conn->insert_id;
-        $sections[] = [
-            'id' => $defaultSectionId,
-            'project_id' => $projectId,
-            'name' => 'To Do',
-            'position' => 0
-        ];
-    }
-    
-    // Initialize tasksBySection with empty arrays for each section
-    foreach ($sections as $section) {
-        $tasksBySection[$section['id']] = [];
-    }
-    
-    // Get all tasks for this project
-    $tasksQuery = "
-        SELECT * FROM tasks 
-        WHERE project_id = ? AND user_id = ? AND is_completed = 0
-        ORDER BY position ASC
-    ";
-    $tasksStmt = $conn->prepare($tasksQuery);
-    $tasksStmt->bind_param("ii", $projectId, $userId);
-    $tasksStmt->execute();
-    $tasksResult = $tasksStmt->get_result();
-    
-    // Add tasks to their sections
-    while ($task = $tasksResult->fetch_assoc()) {
-        $sectionId = $task['section_id'] ?: $sections[0]['id']; // Default to first section if no section
-        if (isset($tasksBySection[$sectionId])) {
-            $tasksBySection[$sectionId][] = $task;
-        } else {
-            // If section doesn't exist (shouldn't happen), put task in first section
-            $tasksBySection[$sections[0]['id']][] = $task;
-        }
-    }
-    
-    // Get task counts
-    $taskCountQuery = "
-        SELECT 
-            COUNT(*) as total_tasks,
-            SUM(CASE WHEN is_completed = 1 THEN 1 ELSE 0 END) as completed_tasks
-        FROM tasks 
-        WHERE project_id = ? AND user_id = ?
-    ";
-    $taskCountStmt = $conn->prepare($taskCountQuery);
-    $taskCountStmt->bind_param("ii", $projectId, $userId);
-    $taskCountStmt->execute();
-    $taskCountResult = $taskCountStmt->get_result();
-    $taskCount = $taskCountResult->fetch_assoc();
-    
-    $totalTasks = $taskCount['total_tasks'];
-    $completedTasks = $taskCount['completed_tasks'];
-    $completionPercentage = $totalTasks > 0 ? round(($completedTasks / $totalTasks) * 100) : 0;
+if (!$project || $project['user_id'] !== $userId) {
+    // Project not found or doesn't belong to user
+    header("Location: ../index.php");
+    exit;
 }
+
+// Get all sections for this project
+$whereConditions = [
+    ['project_id', '==', $projectId]
+];
+$sections = getDocuments('sections', $whereConditions, 'position', 'asc');
+
+// If no sections exist, create a default section
+if (count($sections) === 0) {
+    $defaultSectionData = [
+        'project_id' => $projectId,
+        'name' => 'To Do',
+        'position' => 0
+    ];
+
+    $defaultSectionId = addDocument('sections', $defaultSectionData);
+    $sections[] = [
+        'id' => $defaultSectionId,
+        'project_id' => $projectId,
+        'name' => 'To Do',
+        'position' => 0
+    ];
+}
+
+// Initialize tasksBySection with empty arrays for each section
+foreach ($sections as $section) {
+    $tasksBySection[$section['id']] = [];
+}
+
+// Get all tasks for this project
+$taskWhereConditions = [
+    ['project_id', '==', $projectId],
+    ['user_id', '==', $userId],
+    ['is_completed', '==', false]
+];
+$tasks = getDocuments('tasks', $taskWhereConditions, 'position', 'asc');
+
+// Add tasks to their sections
+foreach ($tasks as $task) {
+    $sectionId = (isset($task['section_id']) && !empty($task['section_id'])) ? $task['section_id'] : $sections[0]['id']; // Default to first section if no section
+    if (isset($tasksBySection[$sectionId])) {
+        $tasksBySection[$sectionId][] = $task;
+    } else {
+        // If section doesn't exist (shouldn't happen), put task in first section
+        $tasksBySection[$sections[0]['id']][] = $task;
+    }
+}
+
+// Get task counts
+$allTasksWhereConditions = [
+    ['project_id', '==', $projectId],
+    ['user_id', '==', $userId]
+];
+$allTasks = getDocuments('tasks', $allTasksWhereConditions);
+
+$totalTasks = count($allTasks);
+$completedTasks = 0;
+
+foreach ($allTasks as $task) {
+    if (isset($task['is_completed']) && $task['is_completed'] === true) {
+        $completedTasks++;
+    }
+}
+
+$completionPercentage = $totalTasks > 0 ? round(($completedTasks / $totalTasks) * 100) : 0;
 
 // Page title
 $pageTitle = htmlspecialchars($project['name']);
@@ -199,8 +107,13 @@ include '../includes/header.php';
                 </span>
             <?php endif; ?>
         </h1>
-        <div>
-            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#taskModal">
+        <div class="position-fixed end-0 d-flex gap-2 p-3 z-3">
+            <button class="btn btn-outline-warning me-2" data-bs-toggle="modal" data-bs-target="#editProjectModal" title="Edit Project">
+                <i class="fas fa-edit"></i> Edit
+            </button>
+            <button class="btn btn-outline-danger me-2" onclick="confirmDeleteProject('<?php echo $projectId; ?>', '<?php echo addslashes($project['name']); ?>')" title="Delete Project">
+                <i class="fas fa-trash"></i> Delete
+            </button>            <button class="btn btn-primary" id="addMainTask" data-project-id="<?php echo $projectId; ?>">
                 <i class="fas fa-plus"></i> Add Task
             </button>
             <button class="btn btn-outline-secondary add-section" data-project-id="<?php echo $projectId; ?>">
@@ -209,10 +122,10 @@ include '../includes/header.php';
         </div>
     </div>
 
-    <div class="project-board">
-        <div class="sortable-sections">
+    <div class="project-board p-3">
+        <div class="sortable-sections d-flex flex-row gap-3">
             <?php foreach ($sections as $section): ?>
-                <div class="project-column" data-section-id="<?php echo $section['id']; ?>">
+                <div class="project-column bg-white p-3" data-section-id="<?php echo $section['id']; ?>">
                     <div class="project-column-header">
                         <h5 class="project-column-title">
                             <span class="section-drag-handle">
@@ -227,9 +140,8 @@ include '../includes/header.php';
                             <ul class="dropdown-menu dropdown-menu-end">
                                 <li><a class="dropdown-item edit-section" href="#" data-id="<?php echo $section['id']; ?>" data-name="<?php echo htmlspecialchars($section['name']); ?>">
                                         <i class="fas fa-edit"></i> Rename
-                                    </a></li>
-                                <?php if (count($sections) > 1): ?>
-                                    <li><a class="dropdown-item delete-section" href="delete-section.php?id=<?php echo $section['id']; ?>" onclick="return confirm('Are you sure you want to delete this section? All tasks will be moved to the first section.');">
+                                    </a></li> <?php if (count($sections) > 1): ?>
+                                    <li><a class="dropdown-item delete-section" href="../sections/delete-section.php?id=<?php echo $section['id']; ?>" onclick="return confirm('Are you sure you want to delete this section? All tasks will be moved to the first section.');">
                                             <i class="fas fa-trash"></i> Delete
                                         </a></li>
                                 <?php endif; ?>
@@ -240,11 +152,10 @@ include '../includes/header.php';
                     <ul class="task-list sortable-tasks column-task-list" data-section-id="<?php echo $section['id']; ?>">
                         <?php if (isset($tasksBySection[$section['id']])): ?>
                             <?php foreach ($tasksBySection[$section['id']] as $task): ?>
-                                <?php $priorityClass = 'priority-' . $task['priority']; ?>
-                                <li class="task-item <?php echo $priorityClass; ?>" data-id="<?php echo $task['id']; ?>">
+                                <?php $priorityClass = 'priority-' . $task['priority']; ?> <li class="task-item <?php echo $priorityClass; ?>" data-id="<?php echo $task['id']; ?>">
                                     <div class="task-header">
                                         <div class="task-checkbox">
-                                            <a href="complete-task.php?id=<?php echo $task['id']; ?>" class="complete-task" data-id="<?php echo $task['id']; ?>">
+                                            <a href="../tasks/complete-task.php?id=<?php echo $task['id']; ?>" class="complete-task" data-id="<?php echo $task['id']; ?>">
                                                 <i class="far fa-circle"></i>
                                             </a>
                                         </div>
@@ -266,18 +177,16 @@ include '../includes/header.php';
                                     <?php endif; ?>
 
                                     <div class="task-footer">
-                                        <div class="task-actions">
-                                            <button class="edit-task" data-id="<?php echo $task['id']; ?>"
+                                        <div class="task-actions"> <button class="edit-task" data-id="<?php echo $task['id']; ?>"
                                                 data-name="<?php echo htmlspecialchars($task['name']); ?>"
-                                                data-description="<?php echo htmlspecialchars($task['description']); ?>"
-                                                data-start-date="<?php echo $task['start_date']; ?>"
-                                                data-due-date="<?php echo $task['due_date']; ?>"
+                                                data-description="<?php echo htmlspecialchars($task['description']); ?>" data-start-date="<?php echo isset($task['start_date']) ? $task['start_date'] : ''; ?>"
+                                                data-due-date="<?php echo isset($task['due_date']) ? $task['due_date'] : ''; ?>"
                                                 data-priority="<?php echo $task['priority']; ?>"
                                                 data-project-id="<?php echo $task['project_id']; ?>"
-                                                data-section-id="<?php echo $task['section_id']; ?>">
+                                                data-section-id="<?php echo isset($task['section_id']) ? $task['section_id'] : ''; ?>">
                                                 <i class="fas fa-edit"></i>
                                             </button>
-                                            <a href="delete-task.php?id=<?php echo $task['id']; ?>" class="delete-task" onclick="return confirm('Are you sure you want to delete this task?');">
+                                            <a href="../tasks/delete-task.php?id=<?php echo $task['id']; ?>" class="delete-task" onclick="return confirm('Are you sure you want to delete this task?');">
                                                 <i class="fas fa-trash"></i>
                                             </a>
                                             <span class="drag-handle" data-bs-toggle="tooltip" title="Drag to reorder">
@@ -292,7 +201,7 @@ include '../includes/header.php';
 
                     <div class="mt-3">
                         <button class="btn btn-sm btn-outline-secondary add-task-to-section" data-section-id="<?php echo $section['id']; ?>">
-                            <i class="fas fa-plus"></i> Add task
+                            <i class="fas fa-plus "></i> Add task
                         </button>
                     </div>
                 </div>
@@ -313,24 +222,116 @@ include '../includes/header.php';
 
                 const newName = prompt('Enter new section name:', currentName);
                 if (newName && newName.trim() !== '' && newName !== currentName) {
-                    window.location.href = `rename-section.php?id=${sectionId}&name=${encodeURIComponent(newName)}`;
+                    window.location.href = `../sections/rename-section.php?id=${sectionId}&name=${encodeURIComponent(newName)}`;
                 }
             });
-        });
-
-        // Add task to specific section
+        });        // Add task to specific section
         const addTaskButtons = document.querySelectorAll('.add-task-to-section');
         addTaskButtons.forEach(button => {
             button.addEventListener('click', function() {
                 const sectionId = this.dataset.sectionId;
                 document.getElementById('sectionId').value = sectionId;
-                document.getElementById('project').value = <?php echo $projectId; ?>;
+                document.getElementById('project').value = '<?php echo $projectId; ?>';
+                
+                // Reset form to ensure we're adding a new task
+                document.getElementById('taskForm').reset();
+                document.getElementById('taskForm').action = '../tasks/add-task.php';
+                document.getElementById('taskModalLabel').textContent = 'Add New Task';
+                
+                // Set today's date as default for date fields
+                const today = new Date().toISOString().split('T')[0];
+                document.getElementById('startDate').value = today;
+                document.getElementById('dueDate').value = today;
 
                 const taskModal = new bootstrap.Modal(document.getElementById('taskModal'));
                 taskModal.show();
             });
+        });        // Complete task handlers
+        const completeTaskLinks = document.querySelectorAll('.complete-task');
+        completeTaskLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const taskId = this.dataset.id;
+                if (confirm('Mark this task as complete?')) {
+                    window.location.href = `../tasks/complete-task.php?id=${taskId}`;
+                }
+            });
+        });
+
+        // Main Add Task button handler
+        document.getElementById('addMainTask').addEventListener('click', function() {
+            // Reset form
+            document.getElementById('taskForm').reset();
+            document.getElementById('taskForm').action = '../tasks/add-task.php';
+            document.getElementById('taskModalLabel').textContent = 'Add New Task';
+            
+            // Set project ID
+            const projectId = this.dataset.projectId;
+            document.getElementById('project').value = projectId;
+            
+            // Use default section if available
+            const defaultSection = document.querySelector('.project-column');
+            if (defaultSection) {
+                const sectionId = defaultSection.dataset.sectionId;
+                document.getElementById('sectionId').value = sectionId;
+            } else {
+                document.getElementById('sectionId').value = '';
+            }
+            
+            // Set today's date as default
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('startDate').value = today;
+            document.getElementById('dueDate').value = today;
+            
+            // Show modal
+            const taskModal = new bootstrap.Modal(document.getElementById('taskModal'));
+            taskModal.show();
         });
     });
 </script>
+
+<!-- Include task modal -->
+<?php include '../includes/task-modal.php'; ?>
+
+<!-- Edit Project Modal -->
+<div class="modal fade" id="editProjectModal" tabindex="-1" aria-labelledby="editProjectModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editProjectModalLabel">Edit Project</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="edit-project.php" method="post">
+                <input type="hidden" name="project_id" value="<?php echo $projectId; ?>">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="editProjectName" class="form-label">Project Name</label>
+                        <input type="text" class="form-control" id="editProjectName" name="name" value="<?php echo htmlspecialchars($project['name']); ?>" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editProjectColor" class="form-label">Color</label>
+                        <input type="color" class="form-control form-control-color" id="editProjectColor" name="color" value="<?php echo $project['color']; ?>" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function confirmDeleteProject(projectId, projectName) {
+        if (confirm('Are you sure you want to delete the project "' + projectName + '"? This will permanently delete all tasks and sections in this project. This action cannot be undone.')) {
+            window.location.href = 'delete-project.php?id=' + projectId;
+        }
+    }
+</script>
+
+<!-- Include project-specific sortable CSS and script -->
+<link rel="stylesheet" href="../assets/css/project-sortable.css">
+<script src="../assets/js/project-sortable.js"></script>
 
 <?php include '../includes/footer.php'; ?>

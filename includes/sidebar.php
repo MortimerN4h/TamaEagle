@@ -1,32 +1,40 @@
 <?php
 // Get current user's projects
 $userId = getCurrentUserId();
-$projectsQuery = "SELECT * FROM projects WHERE user_id = ? ORDER BY name ASC";
-$stmt = $conn->prepare($projectsQuery);
-$stmt->bind_param("i", $userId);
-$stmt->execute();
-$projectsResult = $stmt->get_result();
+$projects = getDocuments('projects', [
+    ['user_id', '==', $userId]
+], 'name', 'asc');
 
 // Get task counts for each section
 $inboxCount = 0;
 $todayCount = 0;
 $upcomingCount = 0;
 
-$countQuery = "SELECT 
-                COUNT(CASE WHEN project_id IS NULL THEN 1 END) as inbox_count,
-                COUNT(CASE WHEN start_date <= CURDATE() AND due_date >= CURDATE() THEN 1 END) as today_count,
-                COUNT(CASE WHEN start_date > CURDATE() AND start_date <= DATE_ADD(CURDATE(), INTERVAL 7 DAY) THEN 1 END) as upcoming_count
-               FROM tasks 
-               WHERE user_id = ? AND is_completed = 0";
-$countStmt = $conn->prepare($countQuery);
-$countStmt->bind_param("i", $userId);
-$countStmt->execute();
-$countResult = $countStmt->get_result();
+// Get all uncompleted tasks for this user
+$tasks = getDocuments('tasks', [
+    ['user_id', '==', $userId],
+    ['is_completed', '==', false]
+]);
 
-if ($countRow = $countResult->fetch_assoc()) {
-    $inboxCount = $countRow['inbox_count'];
-    $todayCount = $countRow['today_count'];
-    $upcomingCount = $countRow['upcoming_count'];
+// Count tasks by type
+$today = date('Y-m-d');
+$upcomingEnd = date('Y-m-d', strtotime('+7 days'));
+
+foreach ($tasks as $task) {
+    // Inbox count (tasks with no project)
+    if (!isset($task['project_id']) || empty($task['project_id'])) {
+        $inboxCount++;
+    }
+
+    // Today count (tasks due today or overdue)
+    if (isset($task['due_date']) && $task['due_date'] <= $today) {
+        $todayCount++;
+    }
+
+    // Upcoming count (tasks due in the next 7 days)
+    if (isset($task['start_date']) && $task['start_date'] > $today && $task['start_date'] <= $upcomingEnd) {
+        $upcomingCount++;
+    }
 }
 
 // Get current page for active class
@@ -81,26 +89,25 @@ $currentPage = basename($_SERVER['PHP_SELF'], '.php');
             </a>
         </div>
         <ul class="sidebar-nav">
-            <?php while ($project = $projectsResult->fetch_assoc()): ?>
+            <?php foreach ($projects as $project): ?>
                 <?php
                 // Get task count for this project
-                $projectTaskQuery = "SELECT COUNT(*) as task_count FROM tasks WHERE project_id = ? AND user_id = ?";
-                $projectTaskStmt = $conn->prepare($projectTaskQuery);
-                $projectTaskStmt->bind_param("ii", $project['id'], $userId);
-                $projectTaskStmt->execute();
-                $taskCountResult = $projectTaskStmt->get_result();
-                $taskCountRow = $taskCountResult->fetch_assoc();
-                $taskCount = $taskCountRow['task_count'];
-                ?> <li class="sidebar-item <?php echo ($currentPage == 'project' && isset($_GET['id']) && $_GET['id'] == $project['id']) ? 'active' : ''; ?>">
+                $projectTasks = getDocuments('tasks', [
+                    ['project_id', '==', $project['id']],
+                    ['user_id', '==', $userId]
+                ]);
+                $taskCount = count($projectTasks);
+                ?>
+                <li class="sidebar-item <?php echo ($currentPage == 'project' && isset($_GET['id']) && $_GET['id'] == $project['id']) ? 'active' : ''; ?>">
                     <a href="../projects/project.php?id=<?php echo $project['id']; ?>" class="sidebar-link">
-                        <i class="fa fa-project-diagram" style="color: <?php echo $project['color']; ?>"></i>
+                        <i class="fa fa-project-diagram" style="color: <?php echo htmlspecialchars($project['color']); ?>"></i>
                         <span><?php echo htmlspecialchars($project['name']); ?></span>
                         <?php if ($taskCount > 0): ?>
                             <span class="badge bg-secondary ms-auto"><?php echo $taskCount; ?></span>
                         <?php endif; ?>
                     </a>
                 </li>
-            <?php endwhile; ?>
+            <?php endforeach; ?>
         </ul>
     </div>
 </div>

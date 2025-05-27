@@ -11,8 +11,18 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST' || empty($_SERVER['HTTP_X_REQUESTED_WI
 }
 
 $userId = getCurrentUserId();
-$sectionId = $_POST['section_id'];
-$position = intval($_POST['position']);
+$sectionId = $_POST['section_id'] ?? null;
+$position = isset($_POST['position']) ? intval($_POST['position']) : 0;
+
+// Validate required parameters
+if (!$sectionId) {
+    header('Content-Type: application/json');
+    echo json_encode(['success' => false, 'message' => 'Section ID is required']);
+    exit;
+}
+
+// Debug logging
+error_log('Updating section position: sectionID=' . $sectionId . ', position=' . $position);
 
 try {
     // Verify section exists
@@ -34,11 +44,25 @@ try {
         echo json_encode(['success' => false, 'message' => 'Permission denied']);
         exit;
     }
-    
-    // Update section position in Firestore
-    updateDocument('sections', $sectionId, [
+      // Update section position in Firestore
+    $updateData = [
         'position' => $position
-    ]);
+    ];
+    
+    $updateResult = updateDocument('sections', $sectionId, $updateData);
+    
+    if (!$updateResult) {
+        header('Content-Type: application/json');
+        echo json_encode([
+            'success' => false,
+            'message' => 'Failed to update section in database',
+            'data' => [
+                'section_id' => $sectionId,
+                'update_data' => $updateData
+            ]
+        ]);
+        exit;
+    }
     
     // Return success response
     header('Content-Type: application/json');
@@ -48,7 +72,8 @@ try {
         'data' => [
             'section_id' => $sectionId,
             'project_id' => $projectId,
-            'position' => $position
+            'position' => $position,
+            'update_time' => date('Y-m-d H:i:s')
         ]
     ]);
     exit;
@@ -58,6 +83,4 @@ try {
     echo json_encode(['success' => false, 'message' => 'Error updating section position: ' . $e->getMessage()]);
     exit;
 }
-
-?>
 ?>

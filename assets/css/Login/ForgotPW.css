@@ -25,21 +25,26 @@ body {
 .forgotpw-form h2 {
     margin-bottom: 20px;
     color: #202020;
-    text-align: center; /* Căn giữa tiêu đề */
-    margin-bottom: 30px; /* Khoảng cách với phần tử tiếp theo */
+    text-align: center;
+    /* Căn giữa tiêu đề */
+    margin-bottom: 30px;
+    /* Khoảng cách với phần tử tiếp theo */
 }
 
 .instruction-text {
     font-size: 14px;
     color: #666;
-    margin-bottom: 25px; /* Khoảng cách với input email */
+    margin-bottom: 25px;
+    /* Khoảng cách với input email */
     line-height: 1.5;
 }
 
 .input-group {
     position: relative;
-    margin-bottom: 20px; /* Tăng khoảng cách dưới input */
-    text-align: left; /* Đưa label và input về bên trái */
+    margin-bottom: 20px;
+    /* Tăng khoảng cách dưới input */
+    text-align: left;
+    /* Đưa label và input về bên trái */
 }
 
 .input-group label {

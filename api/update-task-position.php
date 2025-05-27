@@ -11,9 +11,19 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST' || empty($_SERVER['HTTP_X_REQUESTED_WI
 }
 
 $userId = getCurrentUserId();
-$taskId = $_POST['task_id'];
+$taskId = $_POST['task_id'] ?? null;
 $sectionId = isset($_POST['section_id']) && !empty($_POST['section_id']) ? $_POST['section_id'] : null;
-$position = intval($_POST['position']);
+$position = isset($_POST['position']) ? intval($_POST['position']) : 0;
+
+// Debug logging
+error_log('Updating task position: taskID=' . $taskId . ', sectionID=' . $sectionId . ', position=' . $position);
+
+// Validate required parameters
+if (!$taskId) {
+    header('Content-Type: application/json');
+    echo json_encode(['success' => false, 'message' => 'Task ID is required']);
+    exit;
+}
 
 try {
     // Verify task belongs to user
@@ -26,6 +36,7 @@ try {
     }
     
     $projectId = $task['project_id'] ?? null;
+    $oldSectionId = $task['section_id'] ?? null;
     
     // If section is provided, verify it exists
     if ($sectionId !== null) {
@@ -48,23 +59,51 @@ try {
         $projectId = $section['project_id'];
     }
     
+    // If position is negative, set it to 0
+    if ($position < 0) {
+        $position = 0;
+    }
+    
     // Update the task in Firestore
-    updateDocument('tasks', $taskId, [
+    $updateData = [
         'section_id' => $sectionId,
-        'project_id' => $projectId,
         'position' => $position
-    ]);
+    ];
+    
+    // Only update project ID if it has changed or if it's null
+    if ($projectId !== null) {
+        $updateData['project_id'] = $projectId;
+    }
+      // Update the task
+    $updateResult = updateDocument('tasks', $taskId, $updateData);
+    
+    if (!$updateResult) {
+        header('Content-Type: application/json');
+        echo json_encode([
+            'success' => false,
+            'message' => 'Failed to update task in database',
+            'data' => [
+                'task_id' => $taskId,
+                'update_data' => $updateData
+            ]
+        ]);
+        exit;
+    }
+    
+    // Optional: Reorder other tasks in the same section to maintain consistency
+    // This would require fetching all tasks in the section and updating their positions
     
     // Return success response
     header('Content-Type: application/json');
     echo json_encode([
         'success' => true,
-        'message' => 'Task position updated successfully in Firestore',
+        'message' => 'Task position updated successfully',
         'data' => [
             'task_id' => $taskId,
             'section_id' => $sectionId,
             'project_id' => $projectId,
-            'position' => $position
+            'position' => $position,
+            'update_time' => date('Y-m-d H:i:s')
         ]
     ]);
     exit;
@@ -74,6 +113,4 @@ try {
     echo json_encode(['success' => false, 'message' => 'Error updating task position: ' . $e->getMessage()]);
     exit;
 }
-
-?>
 ?>

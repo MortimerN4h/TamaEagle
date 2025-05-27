@@ -34,7 +34,7 @@ $weekTasks = [];
 foreach ($allTasks as $task) {
     $startDate = isset($task['start_date']) ? $task['start_date'] : null;
     $dueDate = isset($task['due_date']) ? $task['due_date'] : null;
-    
+
     if (
         // Task starts within the week range
         ($startDate && $startDate >= $weekStart && $startDate <= $weekEnd) ||
@@ -57,22 +57,22 @@ foreach ($allTasks as $task) {
             $task['project_name'] = null;
             $task['project_color'] = null;
         }
-        
+
         $weekTasks[] = $task;
     }
 }
 
 // Sort tasks by due date then priority
-usort($weekTasks, function($a, $b) {
+usort($weekTasks, function ($a, $b) {
     $aDueDate = $a['due_date'] ?? '9999-12-31';
     $bDueDate = $b['due_date'] ?? '9999-12-31';
-    
+
     if ($aDueDate == $bDueDate) {
         $aPriority = $a['priority'] ?? 0;
         $bPriority = $b['priority'] ?? 0;
         return $bPriority - $aPriority; // Higher priority first
     }
-    
+
     return strcmp($aDueDate, $bDueDate);
 });
 
@@ -93,13 +93,32 @@ for ($i = 0; $i < 7; $i++) {
     ];
 }
 
-// Add tasks to their respective days
+// Add tasks to their respective days - now showing on all days between start and end date
 foreach ($weekTasks as $task) {
-    $dueDate = $task['due_date'] ?? null;
+    $startDate = isset($task['start_date']) ? $task['start_date'] : null;
+    $dueDate = isset($task['due_date']) ? $task['due_date'] : null;
     
-    // If the task has a due date and it falls within our week
-    if ($dueDate && array_key_exists($dueDate, $tasksByDate)) {
-        $tasksByDate[$dueDate]['tasks'][] = $task;
+    // If the task only has a due date, show it only on the due date
+    if ($dueDate && !$startDate) {
+        if (array_key_exists($dueDate, $tasksByDate)) {
+            $tasksByDate[$dueDate]['tasks'][] = $task;
+        }
+    } 
+    // If the task only has a start date, show it only on the start date
+    else if ($startDate && !$dueDate) {
+        if (array_key_exists($startDate, $tasksByDate)) {
+            $tasksByDate[$startDate]['tasks'][] = $task;
+        }
+    }
+    // If the task has both start and end dates, show it on every day in between
+    else if ($startDate && $dueDate) {
+        $current = $startDate;
+        while ($current <= $dueDate) {
+            if (array_key_exists($current, $tasksByDate)) {
+                $tasksByDate[$current]['tasks'][] = $task;
+            }
+            $current = date('Y-m-d', strtotime('+1 day', strtotime($current)));
+        }
     }
 }
 
@@ -114,7 +133,7 @@ include '../includes/header.php';
 <div class="container-fluid py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="page-title"><?php echo $pageTitle; ?></h1>
-        
+
         <div class="btn-group">
             <a href="?week=<?php echo $prevWeekStart; ?>" class="btn btn-sm btn-outline-secondary">
                 <i class="bi bi-chevron-left"></i>
@@ -139,7 +158,7 @@ include '../includes/header.php';
                         <?php echo $dayData['day_number']; ?>
                     </div>
                 </div>
-                
+
                 <div class="day-tasks">
                     <?php if (count($dayData['tasks']) > 0): ?>
                         <ul class="task-list">
@@ -160,31 +179,27 @@ include '../includes/header.php';
                                                 </div>
                                             <?php endif; ?>
                                         </div>
-                                        
+
                                         <div class="task-meta">
                                             <?php if (!empty($task['project_name'])): ?>
                                                 <span class="task-project" style="background-color: <?php echo $task['project_color']; ?>20;">
                                                     <i class="fa fa-project-diagram" style="color: <?php echo $task['project_color']; ?>"></i>
                                                     <?php echo htmlspecialchars($task['project_name']); ?>
                                                 </span>
-                                            <?php endif; ?>
-                                            
-                                            <div class="task-actions">
+                                            <?php endif; ?>                                            <div class="task-actions">
+                                                <a href="../tasks/complete-task.php?id=<?php echo $task['id']; ?>" class="complete-task checkbox-round" data-bs-toggle="tooltip" title="Mark as complete">
+                                                    <i class="far fa-circle"></i>
+                                                </a>
                                                 <button class="edit-task" data-id="<?php echo $task['id']; ?>"
                                                     data-name="<?php echo htmlspecialchars($task['name']); ?>"
-                                                    data-description="<?php echo htmlspecialchars($task['description']); ?>"
-                                                    data-start-date="<?php echo $task['start_date']; ?>"
+                                                    data-description="<?php echo htmlspecialchars($task['description']); ?>" data-start-date="<?php echo $task['start_date']; ?>"
                                                     data-due-date="<?php echo $task['due_date']; ?>"
                                                     data-priority="<?php echo $task['priority']; ?>"
-                                                    data-project-id="<?php echo $task['project_id']; ?>">
-                                                    <i class="fas fa-edit"></i>
-                                                </button>
-                                                <a href="delete-task.php?id=<?php echo $task['id']; ?>" class="delete-task" onclick="return confirm('Are you sure you want to delete this task?');">
+                                                    data-project-id="<?php echo isset($task['project_id']) ? $task['project_id'] : ''; ?>">
+                                                    <i class="fas fa-edit"></i> </button>
+                                                <a href="../tasks/delete-task.php?id=<?php echo $task['id']; ?>" class="delete-task" onclick="return confirm('Are you sure you want to delete this task?');">
                                                     <i class="fas fa-trash"></i>
                                                 </a>
-                                                <span class="drag-handle" data-bs-toggle="tooltip" title="Drag to reorder">
-                                                    <i class="fas fa-grip-lines"></i>
-                                                </span>
                                             </div>
                                         </div>
                                     </div>
@@ -200,7 +215,7 @@ include '../includes/header.php';
             </div>
         <?php endforeach; ?>
     </div>
-    
+
     <div class="add-task-btn">
         <button type="button" class="btn btn-primary btn-circle btn-floating" data-bs-toggle="modal" data-bs-target="#taskModal">
             <i class="bi bi-plus"></i>

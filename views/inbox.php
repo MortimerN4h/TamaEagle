@@ -30,6 +30,31 @@ $whereConditions = [
 // Get tasks from Firestore
 $tasks = getDocuments('tasks', $whereConditions, $sort, $order);
 
+// If we got empty results due to missing index, show a helpful message
+if (empty($tasks)) {
+    // Try a simpler query without ordering to check if it's an index issue
+    $simpleConditions = [
+        ['user_id', '==', $userId]
+    ];
+    $simpleTasks = getDocuments('tasks', $simpleConditions);
+
+    // If simple query works but complex doesn't, it's likely an index issue
+    if (!empty($simpleTasks)) {
+        // Filter and sort manually as a temporary workaround
+        $tasks = array_filter($simpleTasks, function ($task) {
+            return (!isset($task['project_id']) || $task['project_id'] === null) &&
+                (!isset($task['is_completed']) || $task['is_completed'] === false);
+        });
+
+        // Manual sorting by position
+        usort($tasks, function ($a, $b) {
+            $posA = isset($a['position']) ? $a['position'] : 0;
+            $posB = isset($b['position']) ? $b['position'] : 0;
+            return $posA <=> $posB;
+        });
+    }
+}
+
 // Process tasks with project data
 foreach ($tasks as &$task) {
     $task['project_name'] = null;
@@ -73,8 +98,7 @@ include '../includes/header.php';
                 ?>
                 <li class="task-item <?php echo $priorityClass; ?>" data-id="<?php echo $task['id']; ?>">
                     <div class="task-header">
-                        <div class="task-checkbox">
-                            <a href="complete-task.php?id=<?php echo $task['id']; ?>" class="complete-task" data-id="<?php echo $task['id']; ?>">
+                        <div class="task-checkbox"> <a href="../tasks/complete-task.php?id=<?php echo $task['id']; ?>" class="complete-task" data-id="<?php echo $task['id']; ?>">
                                 <i class="far fa-circle"></i>
                             </a>
                         </div>
@@ -97,16 +121,14 @@ include '../includes/header.php';
 
                     <div class="task-footer">
                         <div class="task-actions">
-                            <button class="edit-task" data-id="<?php echo $task['id']; ?>"
-                                data-name="<?php echo htmlspecialchars($task['name']); ?>"
-                                data-description="<?php echo htmlspecialchars($task['description']); ?>"
-                                data-start-date="<?php echo $task['start_date']; ?>"
-                                data-due-date="<?php echo $task['due_date']; ?>"
-                                data-priority="<?php echo $task['priority']; ?>"
-                                data-project-id="<?php echo $task['project_id']; ?>">
+                            <button class="edit-task" data-id="<?php echo $task['id']; ?>" data-name="<?php echo htmlspecialchars($task['name']); ?>"
+                                data-description="<?php echo htmlspecialchars($task['description'] ?? ''); ?>"
+                                data-start-date="<?php echo $task['start_date'] ?? ''; ?>"
+                                data-due-date="<?php echo $task['due_date'] ?? ''; ?>"
+                                data-priority="<?php echo $task['priority'] ?? 'normal'; ?>"
+                                data-project-id="<?php echo $task['project_id'] ?? ''; ?>">
                                 <i class="fas fa-edit"></i>
-                            </button>
-                            <a href="delete-task.php?id=<?php echo $task['id']; ?>" class="delete-task" onclick="return confirm('Are you sure you want to delete this task?');">
+                            </button> <a href="../tasks/delete-task.php?id=<?php echo $task['id']; ?>" class="delete-task" onclick="return confirm('Are you sure you want to delete this task?');">
                                 <i class="fas fa-trash"></i>
                             </a>
                             <span class="drag-handle" data-bs-toggle="tooltip" title="Drag to reorder">
@@ -126,7 +148,7 @@ include '../includes/header.php';
             <p>Add some tasks to get started</p>
         </div>
     <?php endif; ?>
-    
+
     <div class="add-task-btn">
         <button type="button" class="btn btn-primary btn-circle btn-floating" data-bs-toggle="modal" data-bs-target="#taskModal">
             <i class="bi bi-plus"></i>

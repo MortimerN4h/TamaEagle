@@ -33,7 +33,7 @@ if (!empty($startDate) && !empty($dueDate) && $dueDate < $startDate) {
 // Validate project (if provided) belongs to user
 if (!empty($projectId)) {
     $project = getDocument('projects', $projectId);
-    
+
     if (!$project || $project['user_id'] !== $userId) {
         $_SESSION['error'] = 'Invalid project selected.';
         header("Location: " . $_SERVER['HTTP_REFERER']);
@@ -44,7 +44,7 @@ if (!empty($projectId)) {
 // Validate section (if provided) belongs to project
 if (!empty($sectionId)) {
     $section = getDocument('sections', $sectionId);
-    
+
     if (!$section || $section['project_id'] !== $projectId) {
         $_SESSION['error'] = 'Invalid section selected.';
         header("Location: " . $_SERVER['HTTP_REFERER']);

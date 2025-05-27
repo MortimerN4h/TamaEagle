@@ -40,7 +40,7 @@ submit.addEventListener("click", function (event) {
         .then((userCredential) => {
             //Signed up
             const user = userCredential.user;
-            window.location.href = "../../html/Login/Login.html";
+            window.location.href = "../../auth/login.html";
             console.log("User:", user);
         })
         .catch((error) => {
@@ -50,21 +50,50 @@ submit.addEventListener("click", function (event) {
 })
 
 const googleSignInBtn = document.querySelector('.google-btn');
-googleSignInBtn.addEventListener('click', () => {
-    signInWithPopup(auth, googleProvider)
-        .then((result) => {
-            // Đăng nhập/đăng ký thành công bằng Google
-            const user = result.user;
-            console.log("User signed in with Google:", user);
-            window.location.href = "../../index.html"; 
-        })
-        .catch((error) => {
-            // Xử lý lỗi
-            const errorCode = error.code;
-            const errorMessage = error.message;
-            alert("Lỗi đăng nhập bằng Google: " + errorMessage);
-            console.error("Google Auth Error:", errorCode, errorMessage);
+googleSignInBtn.addEventListener('click', async () => {
+    try {
+        // Sign in with Google popup
+        const result = await signInWithPopup(auth, googleProvider);
+        // Get the ID token
+        const idToken = await result.user.getIdToken();
+
+        // Send ID token to server to create session
+        const response = await fetch('../auth/process-login.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `idToken=${encodeURIComponent(idToken)}&google=true`
         });
+
+        const data = await response.json();
+        if (data.success) {
+            window.location.href = data.redirect;
+        } else {
+            // Provide more specific error messages
+            let errorMsg = data.error || 'Google registration failed';
+            if (data.isAuthError) {
+                errorMsg = 'Server configuration error. Please contact administrator.';
+            }
+            throw new Error(errorMsg);
+        }
+    } catch (error) {
+        let displayError = error.message;
+
+        // Handle specific Google Auth errors
+        if (error.code === 'auth/popup-closed-by-user') {
+            displayError = 'Registration was cancelled by user.';
+        } else if (error.code === 'auth/popup-blocked') {
+            displayError = 'Popup was blocked by browser. Please allow popups and try again.';
+        } else if (error.code === 'auth/cancelled-popup-request') {
+            displayError = 'Multiple popup requests detected. Please try again.';
+        } else if (error.code === 'auth/account-exists-with-different-credential') {
+            displayError = 'An account already exists with this email. Please login instead.';
+        }
+
+        alert("Lỗi đăng ký bằng Google: " + displayError);
+        console.error("Google Auth Error:", error);
+    }
 });
 
 document.querySelectorAll('.toggle-password').forEach(btn => {

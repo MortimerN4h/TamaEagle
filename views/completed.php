@@ -42,15 +42,33 @@ foreach ($paginatedTasks as &$task) {
     } else {
         $task['project_name'] = null;
         $task['project_color'] = null;
-    }
-    
-    // Format the completed_at timestamp for grouping
+    }    // Format the completed_at timestamp for grouping
     if (isset($task['completed_at'])) {
         // Firestore timestamps are automatically converted to PHP \DateTimeImmutable
         if (is_object($task['completed_at'])) {
             $dateTime = $task['completed_at']->format('Y-m-d H:i:s');
-        } else {
+        } 
+        // Handle array-based timestamp (Firestore format)
+        else if (is_array($task['completed_at'])) {
+            // Check if it's a Firestore timestamp array
+            if (isset($task['completed_at']['@type']) && $task['completed_at']['@type'] === 'firestore.googleapis.com/Timestamp') {
+                if (isset($task['completed_at']['value']['seconds'])) {
+                    $seconds = $task['completed_at']['value']['seconds'];
+                    $dateTime = date('Y-m-d H:i:s', $seconds);
+                } else {
+                    $dateTime = date('Y-m-d H:i:s'); // fallback to current time
+                }
+            } else {
+                $dateTime = date('Y-m-d H:i:s'); // fallback to current time
+            }
+        } 
+        // Handle string timestamp
+        else if (is_string($task['completed_at'])) {
             $dateTime = date('Y-m-d H:i:s', strtotime($task['completed_at']));
+        }
+        // Default fallback
+        else {
+            $dateTime = date('Y-m-d H:i:s');
         }
         $task['completed_at_formatted'] = $dateTime;
     } else {
@@ -85,11 +103,11 @@ include '../includes/header.php';
 <div class="container-fluid py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="page-title"><?php echo $pageTitle; ?></h1>
-        
+
         <?php if ($totalTasks > 0): ?>
             <div class="btn-group">
-                <a href="../tasks/clear-completed.php" class="btn btn-sm btn-outline-danger" 
-                   onclick="return confirm('Are you sure you want to delete all completed tasks? This action cannot be undone.');">
+                <a href="../tasks/clear-completed.php" class="btn btn-sm btn-outline-danger"
+                    onclick="return confirm('Are you sure you want to delete all completed tasks? This action cannot be undone.');">
                     Clear All
                 </a>
             </div>
@@ -100,7 +118,7 @@ include '../includes/header.php';
         <?php foreach ($tasksByDate as $dateData): ?>
             <div class="completed-date-group mb-4">
                 <h3 class="date-header"><?php echo $dateData['formatted']; ?></h3>
-                
+
                 <ul class="task-list completed-list">
                     <?php foreach ($dateData['tasks'] as $task): ?>
                         <li class="task-item completed" data-id="<?php echo $task['id']; ?>">
@@ -110,7 +128,7 @@ include '../includes/header.php';
                                         <i class="bi bi-check-circle-fill"></i>
                                     </button>
                                 </div>
-                                
+
                                 <div class="task-name">
                                     <span class="text-decoration-line-through"><?php echo htmlspecialchars($task['name']); ?></span>
                                 </div>
@@ -121,7 +139,7 @@ include '../includes/header.php';
                                         <?php echo htmlspecialchars($task['project_name']); ?>
                                     </div>
                                 <?php endif; ?>
-                                
+
                                 <div class="task-actions">
                                     <button class="btn btn-sm delete-task" data-id="<?php echo $task['id']; ?>" title="Delete Task">
                                         <i class="bi bi-trash"></i>
@@ -142,13 +160,13 @@ include '../includes/header.php';
                             <a class="page-link" href="?page=<?php echo ($page - 1); ?>">Previous</a>
                         </li>
                     <?php endif; ?>
-                    
+
                     <?php for ($i = 1; $i <= $totalPages; $i++): ?>
                         <li class="page-item <?php echo ($i == $page) ? 'active' : ''; ?>">
                             <a class="page-link" href="?page=<?php echo $i; ?>"><?php echo $i; ?></a>
                         </li>
                     <?php endfor; ?>
-                    
+
                     <?php if ($page < $totalPages): ?>
                         <li class="page-item">
                             <a class="page-link" href="?page=<?php echo ($page + 1); ?>">Next</a>

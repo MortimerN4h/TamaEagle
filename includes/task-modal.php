@@ -1,27 +1,12 @@
 <?php
 // Get user's projects for dropdown
 $userId = getCurrentUserId();
-$projects = [];
 
-if ($GLOBALS['useFirebase']) {
-    // Get projects from Firestore
-    $whereConditions = [
-        ['user_id', '==', $userId]
-    ];
-    $projects = getDocuments('projects', $whereConditions, 'name', 'asc');
-} else {
-    // Get projects from MySQL
-    global $conn;
-    $projectQuery = "SELECT * FROM projects WHERE user_id = ? ORDER BY name ASC";
-    $projectStmt = $conn->prepare($projectQuery);
-    $projectStmt->bind_param("i", $userId);
-    $projectStmt->execute();
-    $projectResult = $projectStmt->get_result();
-    
-    while ($project = $projectResult->fetch_assoc()) {
-        $projects[] = $project;
-    }
-}
+// Get projects from Firestore
+$whereConditions = [
+    ['user_id', '==', $userId]
+];
+$projects = getDocuments('projects', $whereConditions, 'name', 'asc');
 
 // Get current date for default values
 $currentDate = date('Y-m-d');

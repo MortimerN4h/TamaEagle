@@ -59,12 +59,11 @@ $(document).ready(function () {
         // Show modal
         const taskModal = new bootstrap.Modal(document.getElementById('taskModal'));
         taskModal.show();
-    });
-    // Complete task button handler
-    $('.complete-task').on('click', function (e) {
-        const taskId = $(this).data('id');
-        window.location.href = '../tasks/complete-task.php?id=' + taskId;
-    });
+    });    // Bỏ hành vi JavaScript cho complete-task, để link HTML hoạt động tự nhiên
+    // $('.complete-task').on('click', function (e) {
+    //     const taskId = $(this).data('id');
+    //     window.location.href = '../tasks/complete-task.php?id=' + taskId;
+    // });
 
     // Add section handler
     $('.add-section').on('click', function () {
@@ -91,7 +90,7 @@ $(document).ready(function () {
                 const taskId = ui.item.data('id');
                 const sectionId = ui.item.closest('.sortable-tasks').data('section-id');
                 const position = ui.item.index();
-                
+
                 // Check if database helper is initialized
                 if (typeof window.dbHelper !== 'undefined') {
                     // Use dbHelper regardless of database type
@@ -138,7 +137,7 @@ $(document).ready(function () {
                 // Get the new positions
                 const sectionId = ui.item.data('section-id');
                 const position = ui.item.index();
-                
+
                 // Check if database helper is initialized
                 if (typeof window.dbHelper !== 'undefined') {
                     // Use dbHelper regardless of database type

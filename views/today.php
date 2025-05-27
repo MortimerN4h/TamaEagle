@@ -89,11 +89,10 @@ include '../includes/header.php';
                     <?php
                     $priorityClass = 'priority-' . $task['priority'];
                     $projectStyle = !empty($task['project_color']) ? 'style="background-color: ' . $task['project_color'] . ';"' : '';
-                    ?>
-                    <li class="task-item <?php echo $priorityClass; ?> overdue" data-id="<?php echo $task['id']; ?>">
+                    ?> <li class="task-item <?php echo $priorityClass; ?> overdue" data-id="<?php echo $task['id']; ?>">
                         <div class="task-header">
                             <div class="task-checkbox">
-                                <a href="complete-task.php?id=<?php echo $task['id']; ?>" class="complete-task" data-id="<?php echo $task['id']; ?>">
+                                <a href="../tasks/complete-task.php?id=<?php echo $task['id']; ?>" class="complete-task" data-id="<?php echo $task['id']; ?>">
                                     <i class="far fa-circle"></i>
                                 </a>
                             </div>
@@ -122,13 +121,13 @@ include '../includes/header.php';
                                 <button class="edit-task" data-id="<?php echo $task['id']; ?>"
                                     data-name="<?php echo htmlspecialchars($task['name']); ?>"
                                     data-description="<?php echo htmlspecialchars($task['description']); ?>"
-                                    data-start-date="<?php echo $task['start_date']; ?>"
-                                    data-due-date="<?php echo $task['due_date']; ?>"
+                                    data-start-date="<?php echo isset($task['start_date']) ? $task['start_date'] : ''; ?>"
+                                    data-due-date="<?php echo isset($task['due_date']) ? $task['due_date'] : ''; ?>"
                                     data-priority="<?php echo $task['priority']; ?>"
-                                    data-project-id="<?php echo $task['project_id']; ?>">
+                                    data-project-id="<?php echo isset($task['project_id']) ? $task['project_id'] : ''; ?>">
                                     <i class="fas fa-edit"></i>
                                 </button>
-                                <a href="delete-task.php?id=<?php echo $task['id']; ?>" class="delete-task" onclick="return confirm('Are you sure you want to delete this task?');">
+                                <a href="../tasks/delete-task.php?id=<?php echo $task['id']; ?>" class="delete-task" onclick="return confirm('Are you sure you want to delete this task?');">
                                     <i class="fas fa-trash"></i>
                                 </a>
                                 <span class="drag-handle" data-bs-toggle="tooltip" title="Drag to reorder">
@@ -149,18 +148,17 @@ include '../includes/header.php';
                 Today <span class="badge bg-primary"><?php echo $todayCount; ?></span>
             </h2>
         </div>
-        
+
         <?php if ($todayCount > 0): ?>
             <ul class="task-list">
                 <?php foreach ($todayTasks as $task): ?>
                     <?php
                     $priorityClass = 'priority-' . $task['priority'];
                     $projectStyle = !empty($task['project_color']) ? 'style="background-color: ' . $task['project_color'] . ';"' : '';
-                    ?>
-                    <li class="task-item <?php echo $priorityClass; ?>" data-id="<?php echo $task['id']; ?>">
+                    ?> <li class="task-item <?php echo $priorityClass; ?>" data-id="<?php echo $task['id']; ?>">
                         <div class="task-header">
                             <div class="task-checkbox">
-                                <a href="complete-task.php?id=<?php echo $task['id']; ?>" class="complete-task" data-id="<?php echo $task['id']; ?>">
+                                <a href="../tasks/complete-task.php?id=<?php echo $task['id']; ?>" class="complete-task" data-id="<?php echo $task['id']; ?>">
                                     <i class="far fa-circle"></i>
                                 </a>
                             </div>
@@ -190,13 +188,13 @@ include '../includes/header.php';
                                 <button class="edit-task" data-id="<?php echo $task['id']; ?>"
                                     data-name="<?php echo htmlspecialchars($task['name']); ?>"
                                     data-description="<?php echo htmlspecialchars($task['description']); ?>"
-                                    data-start-date="<?php echo $task['start_date']; ?>"
-                                    data-due-date="<?php echo $task['due_date']; ?>"
+                                    data-start-date="<?php echo isset($task['start_date']) ? $task['start_date'] : ''; ?>"
+                                    data-due-date="<?php echo isset($task['due_date']) ? $task['due_date'] : ''; ?>"
                                     data-priority="<?php echo $task['priority']; ?>"
-                                    data-project-id="<?php echo $task['project_id']; ?>">
+                                    data-project-id="<?php echo isset($task['project_id']) ? $task['project_id'] : ''; ?>">
                                     <i class="fas fa-edit"></i>
                                 </button>
-                                <a href="delete-task.php?id=<?php echo $task['id']; ?>" class="delete-task" onclick="return confirm('Are you sure you want to delete this task?');">
+                                <a href="../tasks/delete-task.php?id=<?php echo $task['id']; ?>" class="delete-task" onclick="return confirm('Are you sure you want to delete this task?');">
                                     <i class="fas fa-trash"></i>
                                 </a>
                                 <span class="drag-handle" data-bs-toggle="tooltip" title="Drag to reorder">
@@ -217,7 +215,7 @@ include '../includes/header.php';
             </div>
         <?php endif; ?>
     </div>
-    
+
     <div class="add-task-btn">
         <button type="button" class="btn btn-primary btn-circle btn-floating" data-bs-toggle="modal" data-bs-target="#taskModal">
             <i class="bi bi-plus"></i>

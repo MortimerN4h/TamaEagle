@@ -390,3 +390,33 @@ a {
     background-color: var(--hover-color) !important;
     border-color: var(--hover-color) !important;
 }
+
+.container-wrapper {
+    overflow-x: auto;
+    white-space: nowrap;
+}
+
+/* Round checkbox for task completion */
+.checkbox-round {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    position: relative;
+    margin-right: 5px;
+}
+
+.checkbox-round i.far.fa-circle {
+    font-size: 18px;
+    color: #808080;
+    cursor: pointer;
+    transition: color 0.2s ease-in-out;
+}
+
+.checkbox-round:hover i.far.fa-circle {
+    color: var(--primary-color);
+}
+
+/* Upcoming view specific styles */
+.upcoming-day .task-item {
+    cursor: default; /* Remove cursor:grab since tasks are no longer draggable */
+}
