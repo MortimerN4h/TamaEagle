@@ -36,7 +36,7 @@ try {
 }
 
 // Redirect back to previous page or inbox if not available
-$redirect = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '../views/inbox.php';
+$redirect = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '../views/today.php';
 header("Location: $redirect");
 exit;
 ?>

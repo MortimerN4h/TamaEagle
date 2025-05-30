@@ -3,12 +3,26 @@ $(document).ready(function () {
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
         return new bootstrap.Tooltip(tooltipTriggerEl)
-    });
-
-    // Toggle sidebar on mobile
+    });// Toggle sidebar for all screen sizes
     $('#sidebarToggle').on('click', function () {
-        $('.sidebar').toggleClass('show');
-        $('.content-container').toggleClass('sidebar-open');
+        const windowWidth = $(window).width();
+        
+        if (windowWidth <= 768) {
+            // Mobile behavior
+            $('.sidebar').toggleClass('show');
+            $('.content-container').toggleClass('sidebar-open');
+        } else {
+            // Desktop behavior
+            const isCollapsed = $('body').toggleClass('sidebar-collapsed').hasClass('sidebar-collapsed');
+            // Save state in localStorage
+            localStorage.setItem('sidebarCollapsed', isCollapsed);
+        }
+    });
+    
+    // Close sidebar button (for mobile view)
+    $('#closeSidebar').on('click', function() {
+        $('.sidebar').removeClass('show');
+        $('.content-container').removeClass('sidebar-open');
     });
 
     // Task form submit handler
@@ -41,9 +55,7 @@ $(document).ready(function () {
         const dueDate = $(this).data('due-date');
         const priority = $(this).data('priority');
         const projectId = $(this).data('project-id');
-        const sectionId = $(this).data('section-id');
-
-        // Set modal values
+        const sectionId = $(this).data('section-id');        // Set modal values
         $('#taskModalLabel').text('Edit Task');
         $('#taskId').val(taskId);
         $('#taskName').val(taskName);
@@ -51,7 +63,14 @@ $(document).ready(function () {
         $('#startDate').val(startDate);
         $('#dueDate').val(dueDate);
         $('#priority').val(priority);
-        $('#project').val(projectId);
+        
+        // Handle project field which could be either a dropdown or hidden field
+        const projectSelect = document.getElementById('project');
+        if (projectSelect) {
+            $('#project').val(projectId);
+        }
+        // Hidden project_id field is already set with the current project
+        
         $('#sectionId').val(sectionId);
         // Change form action
         $('#taskForm').attr('action', '../tasks/edit-task.php');
@@ -63,14 +82,27 @@ $(document).ready(function () {
     // $('.complete-task').on('click', function (e) {
     //     const taskId = $(this).data('id');
     //     window.location.href = '../tasks/complete-task.php?id=' + taskId;
-    // });
-
-    // Add section handler
+    // });    // Add section handler
     $('.add-section').on('click', function () {
         const projectId = $(this).data('project-id');
+        
+        if (!projectId) {
+            alert('Error: Could not determine project ID');
+            return;
+        }
+        
         const sectionName = prompt('Enter section name:');
         if (sectionName) {
-            window.location.href = '../sections/add-section.php?project_id=' + projectId + '&name=' + encodeURIComponent(sectionName);
+            // Get the base URL from the current page
+            const currentPath = window.location.pathname;
+            const pathParts = currentPath.split('/');
+            // Remove the last part (file name)
+            pathParts.pop();
+            
+            // Construct absolute path to add-section.php
+            const baseUrl = window.location.origin + pathParts.join('/') + '/../sections/add-section.php';
+            
+            window.location.href = baseUrl + '?project_id=' + projectId + '&name=' + encodeURIComponent(sectionName);
         }
     });
 
@@ -168,21 +200,8 @@ $(document).ready(function () {
                 }
             }
         }).disableSelection();
-    }
-
-    // Reset task form when opening the modal for a new task
-    $('#addTaskBtn').on('click', function () {
-        $('#taskModalLabel').text('Add New Task');
-        $('#taskForm').attr('action', '../tasks/add-task.php');
-        $('#taskId').val('');
-        $('#taskName').val('');
-        $('#taskDescription').val('');
-        $('#startDate').val(new Date().toISOString().split('T')[0]);
-        $('#dueDate').val(new Date().toISOString().split('T')[0]);
-        $('#priority').val(0);
-        $('#project').val('');
-        $('#sectionId').val('');
-    });
+    }    // Header add task button removed as per requirements
+    // Now tasks can only be added from project pages
     // Date navigation buttons
     $('.date-nav-prev').on('click', function () {
         const currentWeekStart = $(this).data('current');

@@ -53,7 +53,7 @@ try {
     // Trả về kết quả thành công
     echo json_encode([
         'success' => true,
-        'redirect' => '../views/inbox.php',
+        'redirect' => '../views/today.php',
         'user' => [
             'id' => $firebaseUserId,
             'email' => $email,

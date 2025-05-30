@@ -112,8 +112,8 @@ try {
     $_SESSION['error'] = 'Error adding task: ' . $e->getMessage();
 }
 
-// Redirect back to previous page or inbox if not available
-$redirect = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '../views/inbox.php';
+// Redirect back to previous page or today if not available
+$redirect = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '../views/today.php';
 header("Location: $redirect");
 exit;
 ?>

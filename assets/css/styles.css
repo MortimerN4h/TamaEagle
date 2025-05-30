@@ -66,6 +66,7 @@ a {
     overflow-y: auto;
     transition: all 0.3s ease;
     z-index: 100;
+    left: 0;
 }
 
 .sidebar-content {
@@ -176,9 +177,54 @@ a {
 }
 
 .task-description {
-    font-size: 0.9rem;
-    color: var(--medium-gray);
-    margin-bottom: 10px;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    /* Số dòng muốn hiển thị */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: normal;
+}
+
+/* Full description in task details modal */
+.task-description-text {
+    white-space: pre-wrap;
+    line-height: 1.5;
+}
+
+/* Task details styling */
+.view-task {
+    color: #6c757d;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: color 0.2s ease;
+}
+
+.view-task:hover {
+    color: #0d6efd;
+    opacity: 1;
+}
+
+/* Task details modal styling */
+#taskDetailsModal .modal-body {
+    padding: 1.5rem;
+}
+
+#taskDetailsModal .task-description-text {
+    white-space: pre-wrap;
+    line-height: 1.5;
+}
+
+#taskDetailsModal h6.text-muted {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+#detail-task-description {
+    background-color: #f8f9fa;
+    border-radius: 0.25rem;
+    padding: 1rem;
 }
 
 .task-footer {
@@ -261,8 +307,12 @@ a {
 }
 
 .project-column {
-    min-width: 280px;
-    max-width: 280px;
+    min-width: 350px;
+    max-width: 350px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: var(--box-shadow);
+    background-color: var(--white);
     background-color: var(--light-gray);
     border-radius: 5px;
     padding: 10px;
@@ -282,6 +332,10 @@ a {
 
 .column-task-list {
     min-height: 100px;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    max-height: 90%;
 }
 
 /* Date navigation */
@@ -338,6 +392,19 @@ a {
     .content-container.sidebar-open .main-content {
         margin-left: var(--sidebar-width);
     }
+}
+
+/* Collapsible sidebar styles */
+.sidebar-collapsed .sidebar {
+    left: -250px;
+}
+
+.sidebar-collapsed .main-content {
+    margin-left: 0;
+}
+
+.sidebar-toggle-icon {
+    cursor: pointer;
 }
 
 /* Auth pages */
@@ -398,11 +465,12 @@ a {
 
 /* Round checkbox for task completion */
 .checkbox-round {
-    display: inline-block;
-    width: 18px;
-    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
     position: relative;
-    margin-right: 5px;
 }
 
 .checkbox-round i.far.fa-circle {
@@ -414,9 +482,4 @@ a {
 
 .checkbox-round:hover i.far.fa-circle {
     color: var(--primary-color);
-}
-
-/* Upcoming view specific styles */
-.upcoming-day .task-item {
-    cursor: default; /* Remove cursor:grab since tasks are no longer draggable */
 }

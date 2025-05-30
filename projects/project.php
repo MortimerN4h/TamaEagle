@@ -88,15 +88,17 @@ $completionPercentage = $totalTasks > 0 ? round(($completedTasks / $totalTasks) 
 
 // Page title
 $pageTitle = htmlspecialchars($project['name']);
-
+error_log("Project color: " . $project['color']);
 // Include header
+$temp = $project;
 include '../includes/header.php';
 ?>
-
-<div class="container-fluid py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
+<?php $project = $temp; ?>
+<div class="container-fluid py-1">
+    <div class="d-flex justify-content-between align-items-center">
         <h1 class="page-title">
             <span style="color: <?php echo $project['color']; ?>">
+                <?php error_log("Project color: " . $project['color']); ?>
                 <i class="fa fa-project-diagram"></i>
                 <?php echo $pageTitle; ?>
             </span>
@@ -107,19 +109,43 @@ include '../includes/header.php';
                 </span>
             <?php endif; ?>
         </h1>
-        <div class="position-fixed end-0 d-flex gap-2 p-3 z-3">
+        <div class="gap-2 p-3">
             <button class="btn btn-outline-warning me-2" data-bs-toggle="modal" data-bs-target="#editProjectModal" title="Edit Project">
                 <i class="fas fa-edit"></i> Edit
             </button>
             <button class="btn btn-outline-danger me-2" onclick="confirmDeleteProject('<?php echo $projectId; ?>', '<?php echo addslashes($project['name']); ?>')" title="Delete Project">
                 <i class="fas fa-trash"></i> Delete
-            </button>            <button class="btn btn-primary" id="addMainTask" data-project-id="<?php echo $projectId; ?>">
+            </button> <button class="btn btn-primary" id="addMainTask" data-project-id="<?php echo $projectId; ?>">
                 <i class="fas fa-plus"></i> Add Task
-            </button>
-            <button class="btn btn-outline-secondary add-section" data-project-id="<?php echo $projectId; ?>">
+            </button> <button class="btn btn-outline-secondary add-section" data-project-id="<?php echo $projectId; ?>">
                 <i class="fas fa-plus"></i> Add Section
             </button>
         </div>
+
+        <!-- Backup script for Add Section functionality -->
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const addSectionBtn = document.querySelector('.add-section');
+                if (addSectionBtn) {
+                    console.log('Add Section button found - attaching inline handler');
+                    addSectionBtn.addEventListener('click', function(e) {
+                        console.log('Add Section clicked (inline handler)');
+                        const projectId = this.getAttribute('data-project-id');
+                        console.log('Project ID:', projectId);
+
+                        const sectionName = prompt('Enter section name:');
+                        if (sectionName && projectId) {
+                            const redirectUrl = '../sections/add-section.php?project_id=' + projectId +
+                                '&name=' + encodeURIComponent(sectionName);
+                            console.log('Redirecting to:', redirectUrl);
+                            window.location.href = redirectUrl;
+                        }
+                    });
+                } else {
+                    console.error('Add Section button not found in the document');
+                }
+            });
+        </script>
     </div>
 
     <div class="project-board p-3">
@@ -177,7 +203,23 @@ include '../includes/header.php';
                                     <?php endif; ?>
 
                                     <div class="task-footer">
-                                        <div class="task-actions"> <button class="edit-task" data-id="<?php echo $task['id']; ?>"
+                                        <div class="task-actions display-flex align-items-center">
+                                            <span class="drag-handle p-0" data-bs-toggle="tooltip" title="Drag to reorder">
+                                                <i class="fas fa-grip-lines"></i>
+                                            </span>
+                                            <button type="button" class="view-task "
+                                                data-id="<?php echo $task['id']; ?>"
+                                                data-name="<?php echo htmlspecialchars($task['name']); ?>"
+                                                data-description="<?php echo htmlspecialchars($task['description']); ?>"
+                                                data-start-date="<?php echo isset($task['start_date']) ? $task['start_date'] : ''; ?>"
+                                                data-due-date="<?php echo isset($task['due_date']) ? $task['due_date'] : ''; ?>" data-priority="<?php echo $task['priority']; ?>"
+                                                data-project-id="<?php echo $task['project_id']; ?>"
+                                                data-project-name="<?php echo htmlspecialchars($project['name']); ?>"
+                                                data-project-color="<?php echo $project['color']; ?>"
+                                                data-section-id="<?php echo isset($task['section_id']) ? $task['section_id'] : ''; ?>">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="edit-task" data-id="<?php echo $task['id']; ?>"
                                                 data-name="<?php echo htmlspecialchars($task['name']); ?>"
                                                 data-description="<?php echo htmlspecialchars($task['description']); ?>" data-start-date="<?php echo isset($task['start_date']) ? $task['start_date'] : ''; ?>"
                                                 data-due-date="<?php echo isset($task['due_date']) ? $task['due_date'] : ''; ?>"
@@ -189,9 +231,6 @@ include '../includes/header.php';
                                             <a href="../tasks/delete-task.php?id=<?php echo $task['id']; ?>" class="delete-task" onclick="return confirm('Are you sure you want to delete this task?');">
                                                 <i class="fas fa-trash"></i>
                                             </a>
-                                            <span class="drag-handle" data-bs-toggle="tooltip" title="Drag to reorder">
-                                                <i class="fas fa-grip-lines"></i>
-                                            </span>
                                         </div>
                                     </div>
                                 </li>
@@ -225,19 +264,19 @@ include '../includes/header.php';
                     window.location.href = `../sections/rename-section.php?id=${sectionId}&name=${encodeURIComponent(newName)}`;
                 }
             });
-        });        // Add task to specific section
+        }); // Add task to specific section
         const addTaskButtons = document.querySelectorAll('.add-task-to-section');
         addTaskButtons.forEach(button => {
             button.addEventListener('click', function() {
                 const sectionId = this.dataset.sectionId;
                 document.getElementById('sectionId').value = sectionId;
-                document.getElementById('project').value = '<?php echo $projectId; ?>';
-                
+                // Project ID is automatically set via the hidden field in the modified task-modal.php
+
                 // Reset form to ensure we're adding a new task
                 document.getElementById('taskForm').reset();
                 document.getElementById('taskForm').action = '../tasks/add-task.php';
                 document.getElementById('taskModalLabel').textContent = 'Add New Task';
-                
+
                 // Set today's date as default for date fields
                 const today = new Date().toISOString().split('T')[0];
                 document.getElementById('startDate').value = today;
@@ -246,7 +285,7 @@ include '../includes/header.php';
                 const taskModal = new bootstrap.Modal(document.getElementById('taskModal'));
                 taskModal.show();
             });
-        });        // Complete task handlers
+        }); // Complete task handlers
         const completeTaskLinks = document.querySelectorAll('.complete-task');
         completeTaskLinks.forEach(link => {
             link.addEventListener('click', function(e) {
@@ -256,19 +295,15 @@ include '../includes/header.php';
                     window.location.href = `../tasks/complete-task.php?id=${taskId}`;
                 }
             });
-        });
-
-        // Main Add Task button handler
+        }); // Main Add Task button handler
         document.getElementById('addMainTask').addEventListener('click', function() {
             // Reset form
             document.getElementById('taskForm').reset();
             document.getElementById('taskForm').action = '../tasks/add-task.php';
             document.getElementById('taskModalLabel').textContent = 'Add New Task';
-            
-            // Set project ID
-            const projectId = this.dataset.projectId;
-            document.getElementById('project').value = projectId;
-            
+
+            // Project ID is automatically set via the hidden field in the modified task-modal.php
+
             // Use default section if available
             const defaultSection = document.querySelector('.project-column');
             if (defaultSection) {
@@ -277,12 +312,12 @@ include '../includes/header.php';
             } else {
                 document.getElementById('sectionId').value = '';
             }
-            
+
             // Set today's date as default
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('startDate').value = today;
             document.getElementById('dueDate').value = today;
-            
+
             // Show modal
             const taskModal = new bootstrap.Modal(document.getElementById('taskModal'));
             taskModal.show();
@@ -290,8 +325,15 @@ include '../includes/header.php';
     });
 </script>
 
-<!-- Include task modal -->
-<?php include '../includes/task-modal.php'; ?>
+<!-- Include task modal with project context -->
+<?php
+// Always get the current project ID from the URL parameter to ensure consistency
+$currentProjectId = getGetData('id');
+// Get project details from Firestore to ensure fresh data
+$currentProject = getDocument('projects', $currentProjectId);
+$currentProjectName = $currentProject ? $currentProject['name'] : 'Unknown Project';
+include '../includes/task-modal.php';
+?>
 
 <!-- Edit Project Modal -->
 <div class="modal fade" id="editProjectModal" tabindex="-1" aria-labelledby="editProjectModalLabel" aria-hidden="true">
@@ -333,5 +375,6 @@ include '../includes/header.php';
 <!-- Include project-specific sortable CSS and script -->
 <link rel="stylesheet" href="../assets/css/project-sortable.css">
 <script src="../assets/js/project-sortable.js"></script>
+<script src="../assets/js/project-task-handler.js"></script>
 
 <?php include '../includes/footer.php'; ?>

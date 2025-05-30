@@ -36,7 +36,7 @@ $task = getDocument('tasks', $taskId);
 
 if (!$task || $task['user_id'] !== $userId) {
     $_SESSION['error'] = 'Task not found or you do not have permission to edit it.';
-    header("Location: ../views/inbox.php");
+    header("Location: ../views/today.php");
     exit;
 }
 
@@ -93,8 +93,8 @@ try {
     $_SESSION['error'] = 'Error updating task: ' . $e->getMessage();
 }
 
-// Redirect back to previous page or inbox if not available
-$redirect = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '../views/inbox.php';
+// Redirect back to previous page or today if not available
+$redirect = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '../views/today.php';
 header("Location: $redirect");
 exit;
 ?>

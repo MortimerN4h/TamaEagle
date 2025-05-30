@@ -101,7 +101,7 @@ include '../includes/header.php';
 ?>
 
 <div class="container-fluid py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-2">
         <h1 class="page-title"><?php echo $pageTitle; ?></h1>
 
         <?php if ($totalTasks > 0): ?>
@@ -123,9 +123,9 @@ include '../includes/header.php';
                     <?php foreach ($dateData['tasks'] as $task): ?>
                         <li class="task-item completed" data-id="<?php echo $task['id']; ?>">
                             <div class="task-header">
-                                <div class="task-checkbox">
-                                    <button class="btn-checkbox completed" data-id="<?php echo $task['id']; ?>">
-                                        <i class="bi bi-check-circle-fill"></i>
+                                <div class="task-checkbox-completed">
+                                    <button class="btn-checkbox completed border-0 bg-white" data-id="<?php echo $task['id']; ?>">
+                                        <i class="bi bi-check-circle text-success"></i>
                                     </button>
                                 </div>
 
@@ -141,9 +141,9 @@ include '../includes/header.php';
                                 <?php endif; ?>
 
                                 <div class="task-actions">
-                                    <button class="btn btn-sm delete-task" data-id="<?php echo $task['id']; ?>" title="Delete Task">
+                                    <a href="../tasks/delete-task.php?id=<?php echo $task['id']; ?>" class="delete-task">
                                         <i class="bi bi-trash"></i>
-                                    </button>
+                                    </a>
                                 </div>
                             </div>
                         </li>
@@ -177,9 +177,6 @@ include '../includes/header.php';
         <?php endif; ?>
     <?php else: ?>
         <div class="empty-state">
-            <div class="empty-state-icon">
-                <i class="bi bi-check2-circle"></i>
-            </div>
             <h3>No completed tasks yet</h3>
             <p>Tasks you complete will appear here</p>
         </div>

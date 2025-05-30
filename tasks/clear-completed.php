@@ -4,15 +4,30 @@ requireLogin();
 
 $userId = getCurrentUserId();
 
-// Delete all completed tasks for this user
-$query = "DELETE FROM tasks WHERE user_id = ? AND is_completed = 1";
-$stmt = $conn->prepare($query);
-$stmt->bind_param("i", $userId);
-
-if ($stmt->execute()) {
-    $_SESSION['success'] = 'All completed tasks have been permanently deleted.';
-} else {
-    $_SESSION['error'] = 'Error clearing completed tasks: ' . $conn->error;
+try {
+    // Get all completed tasks for this user
+    $whereConditions = [
+        ['user_id', '==', $userId],
+        ['is_completed', '==', true]
+    ];
+    
+    $completedTasks = getDocuments('tasks', $whereConditions);
+    $deletedCount = 0;
+    
+    // Delete each task individually
+    foreach ($completedTasks as $task) {
+        if (deleteDocument('tasks', $task['id'])) {
+            $deletedCount++;
+        }
+    }
+    
+    if ($deletedCount > 0) {
+        $_SESSION['success'] = 'All completed tasks have been permanently deleted.';
+    } else {
+        $_SESSION['info'] = 'No completed tasks found to delete.';
+    }
+} catch (Exception $e) {
+    $_SESSION['error'] = 'Error clearing completed tasks: ' . $e->getMessage();
 }
 
 // Redirect back to completed page

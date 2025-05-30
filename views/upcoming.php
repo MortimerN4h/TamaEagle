@@ -97,13 +97,13 @@ for ($i = 0; $i < 7; $i++) {
 foreach ($weekTasks as $task) {
     $startDate = isset($task['start_date']) ? $task['start_date'] : null;
     $dueDate = isset($task['due_date']) ? $task['due_date'] : null;
-    
+
     // If the task only has a due date, show it only on the due date
     if ($dueDate && !$startDate) {
         if (array_key_exists($dueDate, $tasksByDate)) {
             $tasksByDate[$dueDate]['tasks'][] = $task;
         }
-    } 
+    }
     // If the task only has a start date, show it only on the start date
     else if ($startDate && !$dueDate) {
         if (array_key_exists($startDate, $tasksByDate)) {
@@ -131,7 +131,7 @@ include '../includes/header.php';
 ?>
 
 <div class="container-fluid py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-2">
         <h1 class="page-title"><?php echo $pageTitle; ?></h1>
 
         <div class="btn-group">
@@ -146,85 +146,92 @@ include '../includes/header.php';
             </a>
         </div>
     </div>
-
-    <div class="row upcoming-week">
-        <?php foreach ($tasksByDate as $date => $dayData): ?>
-            <div class="col upcoming-day <?php echo $dayData['is_today'] ? 'today' : ''; ?>">
-                <div class="day-header">
-                    <div class="day-name <?php echo $dayData['is_today'] ? 'text-primary' : ''; ?>">
-                        <?php echo $dayData['day_short']; ?>
+    <div class="upcoming-container">
+        <div class="upcoming-week d-flex flex-nowrap">
+            <?php foreach ($tasksByDate as $date => $dayData): ?>
+                <div class="card upcoming-day me-3 <?php echo $dayData['is_today'] ? 'today' : ''; ?>" style="min-width: 400px; inline-block;">
+                    <div class="day-header card-header bg-light d-flex justify-content-between align-items-center">
+                        <div class="fw-bold <?php echo $dayData['is_today'] ? 'text-primary' : ''; ?>">
+                            <?php echo $dayData['day_short']; ?>
+                        </div>
+                        <div class="badge rounded-pill <?php echo $dayData['is_today'] ? 'bg-primary text-white' : 'bg-secondary'; ?>">
+                            <?php echo $dayData['day_number']; ?>
+                        </div>
                     </div>
-                    <div class="day-number <?php echo $dayData['is_today'] ? 'bg-primary text-white' : ''; ?>">
-                        <?php echo $dayData['day_number']; ?>
-                    </div>
-                </div>
 
-                <div class="day-tasks">
-                    <?php if (count($dayData['tasks']) > 0): ?>
-                        <ul class="task-list">
-                            <?php foreach ($dayData['tasks'] as $task): ?>
-                                <?php
-                                $priorityClass = 'priority-' . $task['priority'];
-                                $projectStyle = !empty($task['project_color']) ? 'style="background-color: ' . $task['project_color'] . ';"' : '';
-                                ?>
-                                <li class="task-item <?php echo $priorityClass; ?>" data-id="<?php echo $task['id']; ?>">
-                                    <div class="task-content">
-                                        <div class="task-details">
-                                            <div class="task-title">
-                                                <?php echo htmlspecialchars($task['name']); ?>
-                                            </div>
-                                            <?php if (!empty($task['description'])): ?>
-                                                <div class="task-description">
-                                                    <?php echo nl2br(htmlspecialchars($task['description'])); ?>
+                    <div class="card-body day-tasks overflow-y-auto">
+                        <?php if (count($dayData['tasks']) > 0): ?>
+                            <ul class="task-list list-group list-group-flush">
+                                <?php foreach ($dayData['tasks'] as $task): ?>
+                                    <?php
+                                    $priorityClass = 'priority-' . $task['priority'];
+                                    $projectStyle = !empty($task['project_color']) ? 'style="background-color: ' . $task['project_color'] . ';"' : '';
+                                    ?>
+                                    <li class="task-item <?php echo $priorityClass; ?>" data-id="<?php echo $task['id']; ?>">
+                                        <div class="task-container d-flex flex-row justify-content-between">
+                                            <div class="task-content">
+                                                <div class="task-details">
+                                                    <div class="task-title">
+                                                        <?php echo htmlspecialchars($task['name']); ?>
+                                                    </div>
+                                                    <?php if (!empty($task['description'])): ?>
+                                                        <div class="task-description">
+                                                            <?php echo nl2br(htmlspecialchars($task['description'])); ?>
+                                                        </div>
+                                                    <?php endif; ?>
                                                 </div>
-                                            <?php endif; ?>
-                                        </div>
 
-                                        <div class="task-meta">
-                                            <?php if (!empty($task['project_name'])): ?>
-                                                <span class="task-project" style="background-color: <?php echo $task['project_color']; ?>20;">
-                                                    <i class="fa fa-project-diagram" style="color: <?php echo $task['project_color']; ?>"></i>
-                                                    <?php echo htmlspecialchars($task['project_name']); ?>
-                                                </span>
-                                            <?php endif; ?>                                            <div class="task-actions">
-                                                <a href="../tasks/complete-task.php?id=<?php echo $task['id']; ?>" class="complete-task checkbox-round" data-bs-toggle="tooltip" title="Mark as complete">
+                                                <div class="task-meta">
+                                                    <?php if (!empty($task['project_name'])): ?>
+                                                        <span class="task-project" style="background-color: <?php echo $task['project_color']; ?>20;">
+                                                            <i class="fa fa-project-diagram" style="color: <?php echo $task['project_color']; ?>"></i>
+                                                            <?php echo htmlspecialchars($task['project_name']); ?>
+                                                        </span>
+                                                    <?php endif; ?>
+                                                </div>
+                                            </div>
+                                            <div class="task-actions d-flex flex-column align-items-center gap-1">
+                                                <a href="../tasks/complete-task.php?id=<?php echo $task['id']; ?>" class="complete-task checkbox-round" style="height: 3px;">
                                                     <i class="far fa-circle"></i>
                                                 </a>
-                                                <button class="edit-task" data-id="<?php echo $task['id']; ?>"
+                                                <button type="button" class="view-task" style="height: 15px;"
+                                                    data-id="<?php echo $task['id']; ?>"
+                                                    data-name="<?php echo htmlspecialchars($task['name']); ?>"
+                                                    data-description="<?php echo htmlspecialchars($task['description']); ?>"
+                                                    data-start-date="<?php echo isset($task['start_date']) ? $task['start_date'] : ''; ?>"
+                                                    data-due-date="<?php echo isset($task['due_date']) ? $task['due_date'] : ''; ?>"
+                                                    data-priority="<?php echo $task['priority']; ?>"
+                                                    data-project-id="<?php echo isset($task['project_id']) ? $task['project_id'] : ''; ?>"
+                                                    data-project-name="<?php echo isset($task['project_name']) ? htmlspecialchars($task['project_name']) : ''; ?>"
+                                                    data-project-color="<?php echo isset($task['project_color']) ? $task['project_color'] : ''; ?>">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                <button class="edit-task" style="height: 20px;"
+                                                    data-id="<?php echo $task['id']; ?>"
                                                     data-name="<?php echo htmlspecialchars($task['name']); ?>"
                                                     data-description="<?php echo htmlspecialchars($task['description']); ?>" data-start-date="<?php echo $task['start_date']; ?>"
                                                     data-due-date="<?php echo $task['due_date']; ?>"
                                                     data-priority="<?php echo $task['priority']; ?>"
                                                     data-project-id="<?php echo isset($task['project_id']) ? $task['project_id'] : ''; ?>">
                                                     <i class="fas fa-edit"></i> </button>
-                                                <a href="../tasks/delete-task.php?id=<?php echo $task['id']; ?>" class="delete-task" onclick="return confirm('Are you sure you want to delete this task?');">
+                                                <a href="../tasks/delete-task.php?id=<?php echo $task['id']; ?>" class="delete-task" style="height: 20px; align-self: center" onclick="return confirm('Are you sure you want to delete this task?');">
                                                     <i class="fas fa-trash"></i>
                                                 </a>
                                             </div>
                                         </div>
-                                    </div>
-                                </li>
-                            <?php endforeach; ?>
-                        </ul>
-                    <?php else: ?>
-                        <div class="empty-day">
-                            <small>No tasks</small>
-                        </div>
-                    <?php endif; ?>
+                                    </li>
+                                <?php endforeach; ?>
+                            </ul>
+                        <?php else: ?>
+                            <div class="empty-day">
+                                <small>No tasks</small>
+                            </div>
+                        <?php endif; ?>
+                    </div>
                 </div>
-            </div>
-        <?php endforeach; ?>
-    </div>
-
-    <div class="add-task-btn">
-        <button type="button" class="btn btn-primary btn-circle btn-floating" data-bs-toggle="modal" data-bs-target="#taskModal">
-            <i class="bi bi-plus"></i>
-        </button>
+            <?php endforeach; ?>
+        </div>
     </div>
 </div>
-
-<!-- Include task modal -->
-<?php include '../includes/task-modal.php'; ?>
-
 <!-- Include footer -->
 <?php include '../includes/footer.php'; ?>

@@ -49,10 +49,8 @@ try {
     header("Location: project.php?id=$projectId");
     exit;
 } catch (Exception $e) {
-    $_SESSION['error'] = 'Error creating project: ' . $e->getMessage();
-
-    // Redirect back to previous page or inbox if not available
-    $redirect = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '../views/inbox.php';
+    $_SESSION['error'] = 'Error creating project: ' . $e->getMessage();    // Redirect back to previous page or today if not available
+    $redirect = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '../views/today.php';
     header("Location: $redirect");
     exit;
 }

@@ -216,12 +216,11 @@ function updateDocument($collection, $documentId, $data)
         foreach ($data as $key => $value) {
             $formattedData[] = ['path' => $key, 'value' => $value];
         }
-        
-        // Perform update with correctly formatted data and get update result
+          // Perform update with correctly formatted data and get update result
         $updateResult = $docRef->update($formattedData);
         
-        // Log the update time from the result
-        error_log("Document updated successfully: $collection/$documentId at " . json_encode($updateResult->updateTime()));
+        // Log success without trying to access updateTime() which may not be available
+        error_log("Document updated successfully: $collection/$documentId");
         return true;
     } catch (Exception $e) {
         error_log("Error updating document $collection/$documentId: " . $e->getMessage());

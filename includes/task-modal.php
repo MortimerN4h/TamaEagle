@@ -64,16 +64,19 @@ $nextSunday = date('Y-m-d', strtotime('next Sunday'));
                             <option value="2">High</option>
                             <option value="3">Urgent</option>
                         </select>
-                    </div>
-
-                    <div class="mb-3">
+                    </div>                    <div class="mb-3">
                         <label for="project" class="form-label">Project</label>
-                        <select class="form-select" id="project" name="project_id">
-                            <option value="">No Project (Inbox)</option>
-                            <?php foreach ($projects as $project): ?>
-                                <option value="<?php echo $project['id']; ?>"><?php echo htmlspecialchars($project['name']); ?></option>
-                            <?php endforeach; ?>
-                        </select>
+                        <?php if (isset($currentProjectId)): ?>
+                            <input type="hidden" name="project_id" value="<?php echo $currentProjectId; ?>">
+                            <input type="text" class="form-control" value="<?php echo htmlspecialchars($currentProjectName); ?>" readonly disabled>
+                        <?php else: ?>
+                            <select class="form-select" id="project" name="project_id">
+                                <option value="">No Project</option>
+                                <?php foreach ($projects as $project): ?>
+                                    <option value="<?php echo $project['id']; ?>"><?php echo htmlspecialchars($project['name']); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        <?php endif; ?>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -116,7 +119,6 @@ $nextSunday = date('Y-m-d', strtotime('next Sunday'));
                 const startDate = this.getAttribute('data-start');
                 const dueDate = this.getAttribute('data-due');
 
-                document.getElementById('startDate').value = startDate;
                 document.getElementById('dueDate').value = dueDate;
             });
         });

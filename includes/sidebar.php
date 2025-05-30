@@ -5,71 +5,35 @@ $projects = getDocuments('projects', [
     ['user_id', '==', $userId]
 ], 'name', 'asc');
 
-// Get task counts for each section
-$inboxCount = 0;
-$todayCount = 0;
-$upcomingCount = 0;
-
 // Get all uncompleted tasks for this user
 $tasks = getDocuments('tasks', [
     ['user_id', '==', $userId],
     ['is_completed', '==', false]
 ]);
 
-// Count tasks by type
-$today = date('Y-m-d');
-$upcomingEnd = date('Y-m-d', strtotime('+7 days'));
-
-foreach ($tasks as $task) {
-    // Inbox count (tasks with no project)
-    if (!isset($task['project_id']) || empty($task['project_id'])) {
-        $inboxCount++;
-    }
-
-    // Today count (tasks due today or overdue)
-    if (isset($task['due_date']) && $task['due_date'] <= $today) {
-        $todayCount++;
-    }
-
-    // Upcoming count (tasks due in the next 7 days)
-    if (isset($task['start_date']) && $task['start_date'] > $today && $task['start_date'] <= $upcomingEnd) {
-        $upcomingCount++;
-    }
-}
-
 // Get current page for active class
 $currentPage = basename($_SERVER['PHP_SELF'], '.php');
 ?>
 
-<div class="sidebar">
+<div class="sidebar" id="sidebar">
     <div class="sidebar-content">
+        <div class="d-flex justify-content-end d-md-none p-2">
+            <button id="closeSidebar" class="btn btn-sm btn-link text-dark">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
         <!-- Main navigation items -->
         <ul class="sidebar-nav">
-            <li class="sidebar-item <?php echo ($currentPage == 'inbox') ? 'active' : ''; ?>">
-                <a href="../views/inbox.php" class="sidebar-link">
-                    <i class="fa fa-inbox"></i>
-                    <span>Inbox</span>
-                    <?php if ($inboxCount > 0): ?>
-                        <span class="badge bg-secondary ms-auto"><?php echo $inboxCount; ?></span>
-                    <?php endif; ?>
-                </a>
-            </li>
             <li class="sidebar-item <?php echo ($currentPage == 'today') ? 'active' : ''; ?>">
                 <a href="../views/today.php" class="sidebar-link">
                     <i class="fa fa-calendar-day"></i>
                     <span>Today</span>
-                    <?php if ($todayCount > 0): ?>
-                        <span class="badge bg-secondary ms-auto"><?php echo $todayCount; ?></span>
-                    <?php endif; ?>
                 </a>
             </li>
             <li class="sidebar-item <?php echo ($currentPage == 'upcoming') ? 'active' : ''; ?>">
                 <a href="../views/upcoming.php" class="sidebar-link">
                     <i class="fa fa-calendar"></i>
                     <span>Upcoming</span>
-                    <?php if ($upcomingCount > 0): ?>
-                        <span class="badge bg-secondary ms-auto"><?php echo $upcomingCount; ?></span>
-                    <?php endif; ?>
                 </a>
             </li>
             <li class="sidebar-item <?php echo ($currentPage == 'completed') ? 'active' : ''; ?>">
@@ -94,7 +58,8 @@ $currentPage = basename($_SERVER['PHP_SELF'], '.php');
                 // Get task count for this project
                 $projectTasks = getDocuments('tasks', [
                     ['project_id', '==', $project['id']],
-                    ['user_id', '==', $userId]
+                    ['user_id', '==', $userId],
+                    ['is_completed', '==', false]
                 ]);
                 $taskCount = count($projectTasks);
                 ?>
