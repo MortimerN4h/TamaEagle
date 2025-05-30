@@ -90,7 +90,7 @@ TamaEagle sử dụng Firebase Firestore, một cơ sở dữ liệu NoSQL. Cấ
   - Các trường: id, name, description, user_id, project_id, section_id, start_date, due_date, 
     priority, is_completed, position, created_at, updated_at
 
-## Flow làm việc
+## Quy trình hoạt động
 
 ### Front-end
 1. **Xác thực người dùng**:
