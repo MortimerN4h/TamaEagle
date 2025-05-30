@@ -21,8 +21,7 @@ $(document).ready(function() {
     // Store base URL
     const baseUrl = getBaseUrl();
 
-    // ==========================================================
-    // Task sorting functionality - allows moving tasks between sections
+    // ==========================================================    // Task sorting functionality - allows moving tasks between sections
     // ==========================================================
     if ($('.sortable-tasks').length) {
         $('.sortable-tasks').sortable({
@@ -35,6 +34,10 @@ $(document).ready(function() {
             start: function(e, ui) {
                 ui.item.addClass('dragging');
                 ui.placeholder.height(ui.item.height());
+                
+                // Store original position for revert if needed
+                ui.item.data('orig-position', ui.item.index());
+                ui.item.data('orig-section', ui.item.closest('.sortable-tasks').data('section-id'));
             },
             stop: function(e, ui) {
                 ui.item.removeClass('dragging');
@@ -43,19 +46,22 @@ $(document).ready(function() {
                 const taskId = ui.item.data('id');
                 const sectionId = ui.item.closest('.sortable-tasks').data('section-id');
                 const position = ui.item.index();
+                const totalTasks = ui.item.closest('.sortable-tasks').find('.task-item').length;
                 
                 if (!taskId) {
                     console.error('Task ID not found on dragged item');
                     return;
                 }
                 
+                // Validate position (should be between 0 and total tasks - 1)
+                const validPosition = Math.max(0, Math.min(position, totalTasks - 1));
+                
                 // Send AJAX request to update position in database
                 const taskApiUrl = baseUrl + 'api/update-task-position.php';
                 
                 // Add a timestamp to bypass cache
                 const timestamp = new Date().getTime();
-                
-                $.ajax({
+                  $.ajax({
                     url: taskApiUrl + '?_=' + timestamp,
                     type: 'POST',
                     dataType: 'json',
@@ -66,23 +72,41 @@ $(document).ready(function() {
                     data: {
                         task_id: taskId,
                         section_id: sectionId,
-                        position: position
+                        position: validPosition
                     },
                     success: function(response) {
                         if (!response || !response.success) {
                             console.error('Error updating task position:', response ? response.message : 'No response data');
+                            // Revert to original position if there's an error
+                            const origSection = ui.item.data('orig-section');
+                            const origPosition = ui.item.data('orig-position');
+                            
+                            if (origSection && origPosition !== undefined) {
+                                // Find original section and move item back
+                                const $origSectionList = $(`.sortable-tasks[data-section-id="${origSection}"]`);
+                                if ($origSectionList.length) {
+                                    const items = $origSectionList.find('.task-item');
+                                    if (items.length > 0) {
+                                        if (origPosition < items.length) {
+                                            ui.item.insertBefore(items.eq(origPosition));
+                                        } else {
+                                            ui.item.appendTo($origSectionList);
+                                        }
+                                    }
+                                }
+                            }
                         }
                     },
                     error: function(xhr, status, error) {
                         console.error('AJAX error updating task position:', error);
+                        // Similar revert logic could go here
                     }
                 });
             }
         }).disableSelection();
     }
 
-    // ==========================================================
-    // Section sorting functionality - allows reordering sections
+    // ==========================================================    // Section sorting functionality - allows reordering sections
     // ==========================================================
     if ($('.sortable-sections').length) {
         $('.sortable-sections').sortable({
@@ -95,6 +119,9 @@ $(document).ready(function() {
                 ui.item.addClass('dragging');
                 ui.placeholder.height(ui.item.height());
                 ui.placeholder.width(ui.item.width());
+                
+                // Store original position for revert if needed
+                ui.item.data('orig-position', ui.item.index());
             },
             stop: function(e, ui) {
                 ui.item.removeClass('dragging');
@@ -102,19 +129,22 @@ $(document).ready(function() {
                 // Get the relevant data
                 const sectionId = ui.item.data('section-id');
                 const position = ui.item.index();
+                const totalSections = $('.sortable-sections').children().length;
                 
                 if (!sectionId) {
                     console.error('Section ID not found on dragged item');
                     return;
                 }
                 
+                // Validate position (should be between 0 and total sections - 1)
+                const validPosition = Math.max(0, Math.min(position, totalSections - 1));
+                
                 // Send AJAX request to update position in database
                 const sectionApiUrl = baseUrl + 'api/update-section-position.php';
                 
                 // Add a timestamp to bypass cache
                 const timestamp = new Date().getTime();
-                
-                $.ajax({
+                  $.ajax({
                     url: sectionApiUrl + '?_=' + timestamp,
                     type: 'POST',
                     dataType: 'json',
@@ -124,15 +154,29 @@ $(document).ready(function() {
                     },
                     data: {
                         section_id: sectionId,
-                        position: position
+                        position: validPosition
                     },
                     success: function(response) {
                         if (!response || !response.success) {
                             console.error('Error updating section position:', response ? response.message : 'No response data');
+                            // Revert to original position if there's an error
+                            const origPosition = ui.item.data('orig-position');
+                            
+                            if (origPosition !== undefined) {
+                                const $container = $('.sortable-sections');
+                                const items = $container.children();
+                                
+                                if (origPosition < items.length) {
+                                    ui.item.insertBefore(items.eq(origPosition));
+                                } else {
+                                    ui.item.appendTo($container);
+                                }
+                            }
                         }
                     },
                     error: function(xhr, status, error) {
                         console.error('AJAX error updating section position:', error);
+                        // Similar revert logic could go here
                     }
                 });
             }

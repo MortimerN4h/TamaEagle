@@ -55,7 +55,7 @@ $(document).ready(function () {
         const dueDate = $(this).data('due-date');
         const priority = $(this).data('priority');
         const projectId = $(this).data('project-id');
-        const sectionId = $(this).data('section-id');        // Set modal values
+        const sectionId = $(this).data('section-id');
         $('#taskModalLabel').text('Edit Task');
         $('#taskId').val(taskId);
         $('#taskName').val(taskName);

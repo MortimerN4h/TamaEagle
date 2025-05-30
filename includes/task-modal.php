@@ -14,7 +14,6 @@ $tomorrow = date('Y-m-d', strtotime('+1 day'));
 $nextSaturday = date('Y-m-d', strtotime('next Saturday'));
 $nextSunday = date('Y-m-d', strtotime('next Sunday'));
 ?>
-
 <div class="modal fade" id="taskModal" tabindex="-1" aria-labelledby="taskModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -71,7 +70,6 @@ $nextSunday = date('Y-m-d', strtotime('next Sunday'));
                             <input type="text" class="form-control" value="<?php echo htmlspecialchars($currentProjectName); ?>" readonly disabled>
                         <?php else: ?>
                             <select class="form-select" id="project" name="project_id">
-                                <option value="">No Project</option>
                                 <?php foreach ($projects as $project): ?>
                                     <option value="<?php echo $project['id']; ?>"><?php echo htmlspecialchars($project['name']); ?></option>
                                 <?php endforeach; ?>

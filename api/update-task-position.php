@@ -15,9 +15,6 @@ $taskId = $_POST['task_id'] ?? null;
 $sectionId = isset($_POST['section_id']) && !empty($_POST['section_id']) ? $_POST['section_id'] : null;
 $position = isset($_POST['position']) ? intval($_POST['position']) : 0;
 
-// Debug logging
-error_log('Updating task position: taskID=' . $taskId . ', sectionID=' . $sectionId . ', position=' . $position);
-
 // Validate required parameters
 if (!$taskId) {
     header('Content-Type: application/json');
@@ -89,9 +86,38 @@ try {
         ]);
         exit;
     }
-    
-    // Optional: Reorder other tasks in the same section to maintain consistency
-    // This would require fetching all tasks in the section and updating their positions
+      // Reorder other tasks in the same section to maintain consistency
+    if ($sectionId !== null) {
+        // Get all tasks in the current section
+        $tasksWhereConditions = [
+            ['section_id', '==', $sectionId],
+            ['user_id', '==', $userId],
+            ['is_completed', '==', false]
+        ];
+        
+        $sectionTasks = getDocuments('tasks', $tasksWhereConditions, 'position', 'asc');
+        $positionCounter = 0;
+        
+        // Update positions for tasks in the section
+        foreach ($sectionTasks as $sectionTask) {
+            // Skip the task that was just moved
+            if ($sectionTask['id'] === $taskId) {
+                $positionCounter++;
+                continue;
+            }
+            
+            // Only update if position needs to change
+            if ((int)$sectionTask['position'] !== $positionCounter) {
+                $taskUpdateData = [
+                    'position' => $positionCounter
+                ];
+                updateDocument('tasks', $sectionTask['id'], $taskUpdateData);
+                error_log('Reordering task: taskID=' . $sectionTask['id'] . ', new position=' . $positionCounter);
+            }
+            
+            $positionCounter++;
+        }
+    }
     
     // Return success response
     header('Content-Type: application/json');
@@ -106,6 +132,9 @@ try {
             'update_time' => date('Y-m-d H:i:s')
         ]
     ]);
+
+    error_log('Updating task position: taskID=' . $taskId . ', sectionID=' . $sectionId . ', position=' . $position);
+
     exit;
 } catch (Exception $e) {
     // Return error response

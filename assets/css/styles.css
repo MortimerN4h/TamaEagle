@@ -338,6 +338,14 @@ a {
     max-height: 90%;
 }
 
+.task-container-scrollable {
+    max-height: 420px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    z-index: 0;
+    flex-grow: 1;
+}
+
 /* Date navigation */
 .date-navigation {
     display: flex;
@@ -482,4 +490,20 @@ a {
 
 .checkbox-round:hover i.far.fa-circle {
     color: var(--primary-color);
+}
+
+.upcoming-container {
+    display: flex;
+    flex-direction: row;
+    flex-grow: 1;
+}
+
+.upcoming-scrollable {
+    overflow-x: auto;
+    flex-grow: 1;
+    padding: 10px;
+}
+
+.card-upcoming-scrollable-item {
+    max-height: 442px;
 }

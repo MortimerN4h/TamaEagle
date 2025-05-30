@@ -51,7 +51,7 @@ foreach ($allUserTasks as $task) {
     if (isset($task['due_date']) && $task['due_date'] < $currentDate) {
         continue;
     }
-    
+
     $start = $task['start_date'] ?? null;
     $due = $task['due_date'] ?? null;
 
@@ -113,19 +113,21 @@ $pageTitle = 'Today';
 include '../includes/header.php';
 ?>
 
-<div class="container-fluid py-4">
+<div class="container-fluid py-1">
     <div class="d-flex justify-content-between align-items-center mb-0">
-        <h1 class="page-title mb-10">
+        <h1 class="page-title mb-0">
             <?php echo $pageTitle; ?>
             <span class="ms-2 badge text-dark">
                 <?php echo date('l, F j'); ?>
             </span>
         </h1>
     </div>
-    <div class="pt-3 d-flex flex-row justify-content-between mb-3">
+    <div class="pt-3 d-flex flex-row justify-content-between mb-3 gap-3">
+
         <!-- Overdue Tasks Section -->
         <?php if ($overdueCount > 0): ?>
-            <div class="task-section mb-5 w-50 bg-light p-3 rounded shadow-sm me-3">
+        <div class="w-100">
+            <div class="task-section mb-5 w-100 bg-light p-3 rounded shadow-sm me-3">
                 <div class="section-header mb-3">
                     <h2 class="section-title text-danger">
                         Overdue <span class="badge bg-danger"><?php echo $overdueCount; ?></span>
@@ -177,7 +179,7 @@ include '../includes/header.php';
                                         data-project-color="<?php echo isset($task['project_color']) ? $task['project_color'] : ''; ?>">
                                         <i class="fas fa-eye"></i>
                                     </button>
-                                    <button class="edit-task" 
+                                    <button class="edit-task"
                                         data-id="<?php echo $task['id']; ?>"
                                         data-name="<?php echo htmlspecialchars($task['name']); ?>"
                                         data-description="<?php echo htmlspecialchars($task['description']); ?>"
@@ -198,10 +200,12 @@ include '../includes/header.php';
                     <?php endforeach; ?>
                 </ul>
             </div>
+        </div>
         <?php endif; ?>
-
+        
         <!-- Today's Tasks Section -->
-        <div class="task-section w-50 bg-light p-3 rounded shadow-sm">
+        <div class="w-100">
+        <div class="task-section w-100 bg-light p-3 rounded shadow-sm">
             <div class="section-header mb-3">
                 <h2 class="section-title">
                     Today <span class="badge bg-primary"><?php echo $todayCount_main; ?></span>
@@ -278,12 +282,10 @@ include '../includes/header.php';
                 </ul>
             <?php else: ?>
                 <div class="empty-state">
-                    <div class="empty-state-icon">
-                        <i class="bi bi-calendar-check"></i>
-                    </div>
                     <h3>No tasks for today</h3>
                     <p>Enjoy your day off or add some tasks</p>
                 </div> <?php endif; ?>
+        </div>
         </div>
     </div>
 </div>

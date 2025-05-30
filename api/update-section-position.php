@@ -21,9 +21,6 @@ if (!$sectionId) {
     exit;
 }
 
-// Debug logging
-error_log('Updating section position: sectionID=' . $sectionId . ', position=' . $position);
-
 try {
     // Verify section exists
     $section = getDocument('sections', $sectionId);
@@ -43,8 +40,7 @@ try {
         header('Content-Type: application/json');
         echo json_encode(['success' => false, 'message' => 'Permission denied']);
         exit;
-    }
-      // Update section position in Firestore
+    }    // Update section position in Firestore
     $updateData = [
         'position' => $position
     ];
@@ -64,6 +60,34 @@ try {
         exit;
     }
     
+    // Reorder other sections in the same project to maintain consistency
+    $sectionsWhereConditions = [
+        ['project_id', '==', $projectId]
+    ];
+    
+    $projectSections = getDocuments('sections', $sectionsWhereConditions, 'position', 'asc');
+    $positionCounter = 0;
+    
+    // Update positions for sections in the project
+    foreach ($projectSections as $projectSection) {
+        // Skip the section that was just moved
+        if ($projectSection['id'] === $sectionId) {
+            $positionCounter++;
+            continue;
+        }
+        
+        // Only update if position needs to change
+        if ((int)$projectSection['position'] !== $positionCounter) {
+            $sectionUpdateData = [
+                'position' => $positionCounter
+            ];
+            updateDocument('sections', $projectSection['id'], $sectionUpdateData);
+            error_log('Reordering section: sectionID=' . $projectSection['id'] . ', new position=' . $positionCounter);
+        }
+        
+        $positionCounter++;
+    }
+    
     // Return success response
     header('Content-Type: application/json');
     echo json_encode([
@@ -76,6 +100,8 @@ try {
             'update_time' => date('Y-m-d H:i:s')
         ]
     ]);
+    
+    error_log('Updating section position: sectionID=' . $sectionId . ', position=' . $position);
     exit;
 } catch (Exception $e) {
     // Return error response

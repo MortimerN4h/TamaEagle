@@ -94,9 +94,9 @@ $temp = $project;
 include '../includes/header.php';
 ?>
 <?php $project = $temp; ?>
-<div class="container-fluid py-1">
+<div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center">
-        <h1 class="page-title">
+        <h1 class="page-title mb-0">
             <span style="color: <?php echo $project['color']; ?>">
                 <?php error_log("Project color: " . $project['color']); ?>
                 <i class="fa fa-project-diagram"></i>
@@ -109,7 +109,7 @@ include '../includes/header.php';
                 </span>
             <?php endif; ?>
         </h1>
-        <div class="gap-2 p-3">
+        <div class="gap-2 p-1">
             <button class="btn btn-outline-warning me-2" data-bs-toggle="modal" data-bs-target="#editProjectModal" title="Edit Project">
                 <i class="fas fa-edit"></i> Edit
             </button>
@@ -133,7 +133,6 @@ include '../includes/header.php';
                         const projectId = this.getAttribute('data-project-id');
                         console.log('Project ID:', projectId);
 
-                        const sectionName = prompt('Enter section name:');
                         if (sectionName && projectId) {
                             const redirectUrl = '../sections/add-section.php?project_id=' + projectId +
                                 '&name=' + encodeURIComponent(sectionName);
@@ -148,7 +147,7 @@ include '../includes/header.php';
         </script>
     </div>
 
-    <div class="project-board p-3">
+    <div class="project-board p-2 px-0">
         <div class="sortable-sections d-flex flex-row gap-3">
             <?php foreach ($sections as $section): ?>
                 <div class="project-column bg-white p-3" data-section-id="<?php echo $section['id']; ?>">
@@ -174,69 +173,71 @@ include '../includes/header.php';
                             </ul>
                         </div>
                     </div>
-
-                    <ul class="task-list sortable-tasks column-task-list" data-section-id="<?php echo $section['id']; ?>">
-                        <?php if (isset($tasksBySection[$section['id']])): ?>
-                            <?php foreach ($tasksBySection[$section['id']] as $task): ?>
-                                <?php $priorityClass = 'priority-' . $task['priority']; ?> <li class="task-item <?php echo $priorityClass; ?>" data-id="<?php echo $task['id']; ?>">
-                                    <div class="task-header">
-                                        <div class="task-checkbox">
-                                            <a href="../tasks/complete-task.php?id=<?php echo $task['id']; ?>" class="complete-task" data-id="<?php echo $task['id']; ?>">
-                                                <i class="far fa-circle"></i>
-                                            </a>
+                    <div class="task-container-scrollable">
+                        <ul class="task-list sortable-tasks column-task-list" data-section-id="<?php echo $section['id']; ?>">
+                            <?php if (isset($tasksBySection[$section['id']])): ?>
+                                <?php foreach ($tasksBySection[$section['id']] as $task): ?>
+                                    <?php $priorityClass = 'priority-' . $task['priority']; ?> <li class="task-item <?php echo $priorityClass; ?>" data-id="<?php echo $task['id']; ?>">
+                                        <div class="task-header">
+                                            <div class="task-checkbox">
+                                                <a href="../tasks/complete-task.php?id=<?php echo $task['id']; ?>" class="complete-task" data-id="<?php echo $task['id']; ?>">
+                                                    <i class="far fa-circle"></i>
+                                                </a>
+                                            </div>
+                                            <h5 class="task-name"><?php echo htmlspecialchars($task['name']); ?></h5>
+                                            <?php if (!empty($task['due_date'])): ?>
+                                                <span class="task-date <?php echo isPast($task['due_date']) && !isToday($task['due_date']) ? 'text-danger' : ''; ?>">
+                                                    <?php if (isPast($task['due_date']) && !isToday($task['due_date'])): ?>
+                                                        <i class="fas fa-exclamation-circle"></i>
+                                                    <?php endif; ?>
+                                                    <?php echo formatDate($task['due_date']); ?>
+                                                </span>
+                                            <?php endif; ?>
                                         </div>
-                                        <h5 class="task-name"><?php echo htmlspecialchars($task['name']); ?></h5>
-                                        <?php if (!empty($task['due_date'])): ?>
-                                            <span class="task-date <?php echo isPast($task['due_date']) && !isToday($task['due_date']) ? 'text-danger' : ''; ?>">
-                                                <?php if (isPast($task['due_date']) && !isToday($task['due_date'])): ?>
-                                                    <i class="fas fa-exclamation-circle"></i>
-                                                <?php endif; ?>
-                                                <?php echo formatDate($task['due_date']); ?>
-                                            </span>
+
+                                        <?php if (!empty($task['description'])): ?>
+                                            <div class="task-description">
+                                                <?php echo nl2br(htmlspecialchars($task['description'])); ?>
+                                            </div>
                                         <?php endif; ?>
-                                    </div>
 
-                                    <?php if (!empty($task['description'])): ?>
-                                        <div class="task-description">
-                                            <?php echo nl2br(htmlspecialchars($task['description'])); ?>
+                                        <div class="task-footer">
+                                            <div class="task-actions display-flex align-items-center">
+                                                <span class="drag-handle p-0" data-bs-toggle="tooltip" title="Drag">
+                                                    <i class="fas fa-grip-lines"></i>
+                                                </span>
+                                                <button type="button" class="view-task "
+                                                    data-id="<?php echo $task['id']; ?>"
+                                                    data-name="<?php echo htmlspecialchars($task['name']); ?>"
+                                                    data-description="<?php echo htmlspecialchars($task['description']); ?>"
+                                                    data-start-date="<?php echo isset($task['start_date']) ? $task['start_date'] : ''; ?>"
+                                                    data-due-date="<?php echo isset($task['due_date']) ? $task['due_date'] : ''; ?>" data-priority="<?php echo $task['priority']; ?>"
+                                                    data-project-id="<?php echo $task['project_id']; ?>"
+                                                    data-project-name="<?php echo htmlspecialchars($project['name']); ?>"
+                                                    data-project-color="<?php echo $project['color']; ?>"
+                                                    data-section-id="<?php echo isset($task['section_id']) ? $task['section_id'] : ''; ?>">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                <button class="edit-task"
+                                                    data-id="<?php echo $task['id']; ?>"
+                                                    data-name="<?php echo htmlspecialchars($task['name']); ?>"
+                                                    data-description="<?php echo htmlspecialchars($task['description']); ?>" data-start-date="<?php echo isset($task['start_date']) ? $task['start_date'] : ''; ?>"
+                                                    data-due-date="<?php echo isset($task['due_date']) ? $task['due_date'] : ''; ?>"
+                                                    data-priority="<?php echo $task['priority']; ?>"
+                                                    data-project-id="<?php echo $task['project_id']; ?>"
+                                                    data-section-id="<?php echo isset($task['section_id']) ? $task['section_id'] : ''; ?>">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <a href="../tasks/delete-task.php?id=<?php echo $task['id']; ?>" class="delete-task" onclick="return confirm('Are you sure you want to delete this task?');">
+                                                    <i class="fas fa-trash"></i>
+                                                </a>
+                                            </div>
                                         </div>
-                                    <?php endif; ?>
-
-                                    <div class="task-footer">
-                                        <div class="task-actions display-flex align-items-center">
-                                            <span class="drag-handle p-0" data-bs-toggle="tooltip" title="Drag to reorder">
-                                                <i class="fas fa-grip-lines"></i>
-                                            </span>
-                                            <button type="button" class="view-task "
-                                                data-id="<?php echo $task['id']; ?>"
-                                                data-name="<?php echo htmlspecialchars($task['name']); ?>"
-                                                data-description="<?php echo htmlspecialchars($task['description']); ?>"
-                                                data-start-date="<?php echo isset($task['start_date']) ? $task['start_date'] : ''; ?>"
-                                                data-due-date="<?php echo isset($task['due_date']) ? $task['due_date'] : ''; ?>" data-priority="<?php echo $task['priority']; ?>"
-                                                data-project-id="<?php echo $task['project_id']; ?>"
-                                                data-project-name="<?php echo htmlspecialchars($project['name']); ?>"
-                                                data-project-color="<?php echo $project['color']; ?>"
-                                                data-section-id="<?php echo isset($task['section_id']) ? $task['section_id'] : ''; ?>">
-                                                <i class="fas fa-eye"></i>
-                                            </button>
-                                            <button class="edit-task" data-id="<?php echo $task['id']; ?>"
-                                                data-name="<?php echo htmlspecialchars($task['name']); ?>"
-                                                data-description="<?php echo htmlspecialchars($task['description']); ?>" data-start-date="<?php echo isset($task['start_date']) ? $task['start_date'] : ''; ?>"
-                                                data-due-date="<?php echo isset($task['due_date']) ? $task['due_date'] : ''; ?>"
-                                                data-priority="<?php echo $task['priority']; ?>"
-                                                data-project-id="<?php echo $task['project_id']; ?>"
-                                                data-section-id="<?php echo isset($task['section_id']) ? $task['section_id'] : ''; ?>">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <a href="../tasks/delete-task.php?id=<?php echo $task['id']; ?>" class="delete-task" onclick="return confirm('Are you sure you want to delete this task?');">
-                                                <i class="fas fa-trash"></i>
-                                            </a>
-                                        </div>
-                                    </div>
-                                </li>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
-                    </ul>
+                                    </li>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </ul>
+                    </div>
 
                     <div class="mt-3">
                         <button class="btn btn-sm btn-outline-secondary add-task-to-section" data-section-id="<?php echo $section['id']; ?>">
