@@ -115,9 +115,8 @@ include '../includes/header.php';
             </button>
             <button class="btn btn-outline-danger me-2" onclick="confirmDeleteProject('<?php echo $projectId; ?>', '<?php echo addslashes($project['name']); ?>')" title="Delete Project">
                 <i class="fas fa-trash"></i> Delete
-            </button> <button class="btn btn-primary" id="addMainTask" data-project-id="<?php echo $projectId; ?>">
-                <i class="fas fa-plus"></i> Add Task
-            </button> <button class="btn btn-outline-secondary add-section" data-project-id="<?php echo $projectId; ?>">
+            </button> 
+            <button class="btn btn-outline-secondary add-section" data-project-id="<?php echo $projectId; ?>">
                 <i class="fas fa-plus"></i> Add Section
             </button>
         </div>
@@ -296,32 +295,6 @@ include '../includes/header.php';
                     window.location.href = `../tasks/complete-task.php?id=${taskId}`;
                 }
             });
-        }); // Main Add Task button handler
-        document.getElementById('addMainTask').addEventListener('click', function() {
-            // Reset form
-            document.getElementById('taskForm').reset();
-            document.getElementById('taskForm').action = '../tasks/add-task.php';
-            document.getElementById('taskModalLabel').textContent = 'Add New Task';
-
-            // Project ID is automatically set via the hidden field in the modified task-modal.php
-
-            // Use default section if available
-            const defaultSection = document.querySelector('.project-column');
-            if (defaultSection) {
-                const sectionId = defaultSection.dataset.sectionId;
-                document.getElementById('sectionId').value = sectionId;
-            } else {
-                document.getElementById('sectionId').value = '';
-            }
-
-            // Set today's date as default
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('startDate').value = today;
-            document.getElementById('dueDate').value = today;
-
-            // Show modal
-            const taskModal = new bootstrap.Modal(document.getElementById('taskModal'));
-            taskModal.show();
         });
     });
 </script>
