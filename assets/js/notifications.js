@@ -35,22 +35,7 @@ function loadNotifications() {
     notificationContainer.innerHTML = '<div class="p-3 text-center"><i class="fa fa-spinner fa-spin"></i>Loading notifications...</div>';
       // Use base URL from meta tag if available, otherwise construct from path
     const baseUrl = document.querySelector('meta[name="base-url"]')?.getAttribute('content');
-    let finalUrl;
-    
-    if (baseUrl) {
-        finalUrl = baseUrl + '/api/get-notifications.php';
-    } else {
-        const currentPath = window.location.pathname;
-        const pathParts = currentPath.split('/');
-        // Remove the file name
-        pathParts.pop();
-        // Remove the view/projects/etc. folder
-        const lastFolder = pathParts[pathParts.length - 1];
-        if (lastFolder === 'views' || lastFolder === 'projects' || lastFolder === 'tasks') {
-            pathParts.pop();
-        }
-        finalUrl = window.location.origin  + '/api/get-notifications.php';
-    }
+    let finalUrl = window.location.origin + '/api/get-notifications.php';
     
     console.log("Fetching notifications from:", finalUrl);
       fetch(finalUrl)
