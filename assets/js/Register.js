@@ -30,12 +30,18 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
 //submit button
-const submit = document.getElementById('submit');
-submit.addEventListener("click", function (event) {
+const form = document.querySelector('.register-form');
+form.addEventListener("submit", function (event) {
     event.preventDefault()
     //input
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
+    const confirmPassword = document.getElementById('confirm-password').value;
+    // Check if passwords match
+    if (password !== confirmPassword) {
+        alert("Mật khẩu không khớp. Vui lòng kiểm tra lại.");
+        return;
+    }
     createUserWithEmailAndPassword(auth, email, password)
         .then((userCredential) => {
             //Signed up

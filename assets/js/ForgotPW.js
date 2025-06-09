@@ -17,10 +17,8 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
-// Nút gửi liên kết đặt lại mật khẩu
-const resetPasswordBtn = document.getElementById('resetPassword');
-
-resetPasswordBtn.addEventListener("click", function (event) {
+const form = document.querySelector('.forgotpw-form');
+form.addEventListener("submit", function (event) {
     event.preventDefault(); // Ngăn chặn form gửi đi mặc định
 
     const email = document.getElementById('email').value;
@@ -36,7 +34,7 @@ resetPasswordBtn.addEventListener("click", function (event) {
             alert("Chúng tôi đã gửi một liên kết đặt lại mật khẩu đến email của bạn. Vui lòng kiểm tra hộp thư đến và thư mục spam.");
             console.log("Password reset email sent!");
             setTimeout(() => {
-                window.location.href = "../../html/Login/Login.html";
+                window.location.href = "../../auth/login.html"; // Chuyển hướng đến trang đăng nhập
             }, 2000); // Chuyển hướng sau 2 giây
         })
         .catch((error) => {
